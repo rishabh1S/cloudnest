@@ -10,8 +10,18 @@ spring:
     properties:
       hibernate:
         "[format_sql]": true
+  servlet:
+    multipart:
+      max-file-size: 200MB
+      max-request-size: 200MB
   config:
     import: optional:file:.env[.properties]
 
 server:
   port: 8080
+
+minio:
+  url: ${MINIO_URL}
+  access-key: ${MINIO_ACCESS_KEY}
+  secret-key: ${MINIO_SECRET_KEY}
+  bucket: ${MINIO_BUCKET}
