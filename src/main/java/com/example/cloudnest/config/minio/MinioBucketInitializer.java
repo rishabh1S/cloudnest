@@ -3,6 +3,8 @@ package com.example.cloudnest.config.minio;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import com.example.cloudnest.exception.BucketInitializationException;
+
 import io.minio.BucketExistsArgs;
 import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
@@ -32,7 +34,7 @@ public class MinioBucketInitializer {
                 log.info("Bucket already exists: {}", bucket);
             }
         } catch (Exception e) {
-            throw new RuntimeException("Failed to create MinIO bucket", e);
+            throw new BucketInitializationException("Failed to create MinIO bucket", e);
         }
     }
 }

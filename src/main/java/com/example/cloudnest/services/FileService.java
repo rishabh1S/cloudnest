@@ -11,6 +11,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.example.cloudnest.exception.FileStorageException;
+import com.example.cloudnest.exception.UserNotFoundException;
 import com.example.cloudnest.model.entity.FileMetadata;
 import com.example.cloudnest.model.entity.User;
 import com.example.cloudnest.repository.FileMetadataRepository;
@@ -40,15 +42,14 @@ public class FileService {
 
     public String uploadFile(MultipartFile file) {
         log.info("Uploading file: {}", file.getOriginalFilename());
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String email = auth.getName();
+
+        User owner = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
+
+        String filename = UUID.randomUUID() + "-" + file.getOriginalFilename();
         try {
-            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            String email = auth.getName();
-
-            User owner = userRepository.findByEmail(email)
-                    .orElseThrow(() -> new RuntimeException("User not found"));
-
-            String filename = UUID.randomUUID() + "-" + file.getOriginalFilename();
-
             minioClient.putObject(
                     PutObjectArgs.builder()
                             .bucket(bucket)
@@ -56,18 +57,17 @@ public class FileService {
                             .stream(file.getInputStream(), file.getSize(), -1)
                             .contentType(file.getContentType())
                             .build());
-
-            FileMetadata metadata = new FileMetadata();
-            metadata.setFilename(filename);
-            metadata.setSize(file.getSize());
-            metadata.setUrl(bucket + "/" + filename); // simple reference
-            metadata.setOwner(owner);
-            fileMetadataRepository.save(metadata);
-
-            return filename;
         } catch (Exception e) {
-            throw new RuntimeException("File upload failed", e);
+            throw new FileStorageException("File upload failed", e);
         }
+        FileMetadata metadata = new FileMetadata();
+        metadata.setFilename(filename);
+        metadata.setSize(file.getSize());
+        metadata.setUrl(bucket + "/" + filename); // simple reference
+        metadata.setOwner(owner);
+        fileMetadataRepository.save(metadata);
+
+        return filename;
     }
 
     public byte[] downloadFile(String filename) {
@@ -76,7 +76,7 @@ public class FileService {
                 GetObjectArgs.builder().bucket(bucket).object(filename).build())) {
             return stream.readAllBytes();
         } catch (Exception e) {
-            throw new RuntimeException("File download failed", e);
+            throw new FileStorageException("File download failed", e);
         }
     }
 
@@ -90,7 +90,7 @@ public class FileService {
             }
             return files;
         } catch (Exception e) {
-            throw new RuntimeException("Listing files failed", e);
+            throw new FileStorageException("Listing files failed", e);
         }
     }
 
@@ -103,7 +103,7 @@ public class FileService {
             // 2: Delete from DB
             fileMetadataRepository.deleteByFilename(filename);
         } catch (Exception e) {
-            throw new RuntimeException("Delete failed", e);
+            throw new FileStorageException("Delete failed", e);
         }
     }
 }

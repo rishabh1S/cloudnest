@@ -1,6 +1,7 @@
 package com.example.cloudnest.model.entity;
 
 import java.time.Instant;
+import java.util.UUID;
 
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -26,7 +27,7 @@ import lombok.NoArgsConstructor;
 public class FileMetadata {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    private Long id;
+    private UUID id;
 
     @Column(name = "filename", nullable = false, length = 255)
     private String filename;
