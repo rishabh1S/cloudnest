@@ -1,4 +1,4 @@
-package com.example.cloudnest.config;
+package com.example.cloudnest.config.minio;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
