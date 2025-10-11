@@ -1,39 +1,69 @@
-HELP.md
+# ============================
+# General
+# ============================
+.DS_Store
+*.log
+logs/
+*.tmp
+*.bak
+*.swp
+.env
+.env.local
+.env.*.local
+
+# ============================
+# Java / Maven / Spring Boot
+# ============================
 target/
-.mvn/wrapper/maven-wrapper.jar
-!**/src/main/**/target/
-!**/src/test/**/target/
+!.mvn/wrapper/maven-wrapper.jar
+.mvn/wrapper/maven-wrapper.properties
+.mvn/timing.properties
 
-### STS ###
-.apt_generated
-.classpath
-.factorypath
-.project
-.settings
-.springBeans
-.sts4-cache
+# Maven / Gradle
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+build/
+.gradle/
+*.class
+*.jar
+*.war
+*.ear
 
-### IntelliJ IDEA ###
-.idea
-*.iws
+# Spring specific
+spring.log
+application.yml
+application.properties
+
+# ============================
+# IntelliJ / VSCode / Eclipse
+# ============================
+.idea/
 *.iml
 *.ipr
-
-### Environment Variables ###
-.env
-.env.*
-
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
-build/
-!**/src/main/**/build/
-!**/src/test/**/build/
-
-### VS Code ###
+*.iws
 .vscode/
+.project
+.classpath
+.settings/
+bin/
+out/
 
-.DS_Store
+# ============================
+# Docker / System
+# ============================
+docker-compose.override.yml
+*.pid
+*.seed
+*.pid.lock
+
+# ============================
+# OS generated files
+# ============================
+Thumbs.db
+ehthumbs.db
+Icon?
+__MACOSX/
