@@ -8,6 +8,7 @@ import com.example.auth.exception.InvalidCredentialsException;
 import com.example.auth.exception.UserAlreadyExistsException;
 import com.example.auth.exception.UserNotFoundException;
 import com.example.auth.model.dto.LoginRequest;
+import com.example.auth.model.dto.LoginResponse;
 import com.example.auth.model.dto.SignupRequest;
 import com.example.auth.model.entity.User;
 import com.example.auth.repository.UserRepository;
@@ -30,20 +31,23 @@ public class AuthService {
         }
 
         User user = new User();
-        user.setUsername(signupRequest.getUsername());
+        user.setName(signupRequest.getName());
         user.setEmail(signupRequest.getEmail());
         user.setPassword(passwordEncoder.encode(signupRequest.getPassword()));
 
         return userRepository.save(user);
     }
 
-    public String login(LoginRequest loginRequest) {
+    public LoginResponse login(LoginRequest loginRequest) {
         log.info("Logging in user: {}", loginRequest.getEmail());
         User user = userRepository.findByEmail(loginRequest.getEmail())
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
         if (!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
             throw new InvalidCredentialsException("Invalid password");
         }
-        return jwtUtil.generateToken(user.getEmail());
+        String token = jwtUtil.generateToken(user);
+        LoginResponse response = new LoginResponse();
+        response.setToken(token);
+        return response;
     }
 }
