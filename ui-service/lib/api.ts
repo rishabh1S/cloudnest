@@ -1,6 +1,6 @@
 import { getToken } from "./auth"
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:80"
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:80/api"
 
 export async function api(input: RequestInfo, init?: RequestInit) {
   const token = getToken()

@@ -5,9 +5,9 @@ import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'CloudNest: Your Personal Cloud Storage',
-  description: 'Securely store, manage, and access your files from anywhere with CloudNest.',
-  generator: 'Next.js',
+  title: 'v0 App',
+  description: 'Created with v0',
+  generator: 'v0.app',
 }
 
 export default function RootLayout({

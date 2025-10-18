@@ -10,7 +10,7 @@ export default function DashboardLayout({
 }) {
   return (
     <AuthGuard>
-      <div className="grid min-h-dvh grid-rows-[auto_1fr] md:grid-cols-[16rem_1fr] md:grid-rows-1">
+      <div className="min-h-screen grid grid-rows-[auto_1fr] md:grid-cols-[16rem_1fr] md:grid-rows-1">
         <div className="hidden md:block">
           <Sidebar />
         </div>

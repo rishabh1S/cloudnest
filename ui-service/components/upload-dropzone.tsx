@@ -49,12 +49,12 @@ export function UploadDropzone() {
   function chooseFile() {
     inputRef.current?.click()
   }
-
+  
   return (
     <div className="space-y-4">
       <div
         {...getRootProps()}
-        className="grid place-items-center rounded-2xl border-2 border-dashed p-10 text-center transition-colors hover:bg-muted/40"
+        className="grid place-items-center rounded-2xl border-2 border-dashed p-12 min-h-[75vh] text-center transition-colors hover:bg-muted/40"
         aria-label="Drag and drop upload area"
       >
         <input {...getInputProps()} />

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { useToast } from "@/hooks/use-toast"
 import { FilePreviewDialog } from "./file-preview-dialog"
+import { LuFileSearch } from "react-icons/lu";
 
 type FileItem = {
   id: string
@@ -76,9 +77,9 @@ export function FileTable() {
 
   if (!data || data.length === 0) {
     return (
-      <div className="grid place-items-center rounded-2xl border bg-card p-12 text-center">
+      <div className="grid place-items-center rounded-2xl border bg-card p-12 text-center min-h-[75vh]">
         <div className="space-y-2">
-          <img src="/empty-state-folder.jpg" alt="" className="mx-auto opacity-80" />
+          <LuFileSearch className="h-10 w-10 mx-auto text-muted-foreground" />
           <h3 className="text-lg font-semibold">No files yet</h3>
           <p className="text-sm text-muted-foreground">Upload your first file to get started.</p>
         </div>
