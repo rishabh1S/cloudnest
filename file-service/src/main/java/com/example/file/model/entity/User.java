@@ -1,4 +1,4 @@
-package com.example.file.model;
+package com.example.file.model.entity;
 
 import java.util.List;
 import java.util.UUID;

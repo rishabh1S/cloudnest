@@ -61,7 +61,7 @@ export function FileTable() {
   async function onDelete(id: string) {
     try {
       await api("/files/${id}", { method: "DELETE" })
-      mutate("/files")
+      mutate("/files/")
       toast({ title: "File deleted" })
     } catch (e: any) {
       toast({ title: "Delete failed", description: e.message })
@@ -139,7 +139,7 @@ export function FileTable() {
           file={selected}
           onDeleted={() => {
             setSelected(null)
-            mutate("/files")
+            mutate("/files/")
           }}
         />
       )}

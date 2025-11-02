@@ -11,8 +11,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.example.file.exception.FileStorageException;
 import com.example.file.exception.UserNotFoundException;
-import com.example.file.model.FileMetadata;
-import com.example.file.model.User;
+import com.example.file.model.dto.FileResponseDto;
+import com.example.file.model.entity.FileMetadata;
+import com.example.file.model.entity.User;
 import com.example.file.repository.FileMetadataRepository;
 import com.example.file.repository.UserRepository;
 import com.example.file.utils.JsonUtils;
@@ -80,15 +81,33 @@ public class FileService {
         }
     }
 
-    public List<String> listFiles() {
+    public List<FileResponseDto> listFiles(String userHeader) {
         try {
-            Iterable<Result<Item>> results = minioClient.listObjects(
-                    ListObjectsArgs.builder().bucket(bucket).build());
-            List<String> files = new ArrayList<>();
-            for (Result<Item> result : results) {
-                files.add(result.get().objectName());
-            }
-            return files;
+            User user = JsonUtils.fromJson(userHeader, User.class);
+            log.info("Listing files for user: {}", user.getEmail());
+
+            User owner = userRepository.findByEmail(user.getEmail())
+                    .orElseThrow(() -> new UserNotFoundException("User not found"));
+
+            List<FileMetadata> fileEntities = fileMetadataRepository.findByOwner(owner);
+
+            return fileEntities.stream().map(f -> {
+                String originalName = f.getFilename();
+                String type = "";
+                int idx = originalName.lastIndexOf('.');
+                if (idx != -1 && idx < originalName.length() - 1) {
+                    type = originalName.substring(idx + 1);
+                }
+
+                return new FileResponseDto(f.getId(),
+                        originalName,
+                        type,
+                        f.getSize(),
+                        f.getCreatedAt(),
+                        f.getUrl() 
+                );
+            }).toList();
+
         } catch (Exception e) {
             throw new FileStorageException("Listing files failed", e);
         }

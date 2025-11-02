@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.example.file.model.dto.FileResponseDto;
 import com.example.file.service.FileService;
 import com.google.common.net.HttpHeaders;
 
@@ -26,7 +27,8 @@ public class FileController {
     private final FileService fileService;
 
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<String> upload(@RequestParam MultipartFile file, @RequestHeader("X-User") String userHeader) {
+    public ResponseEntity<String> upload(@RequestParam MultipartFile file,
+            @RequestHeader("X-User") String userHeader) {
         return ResponseEntity.ok(fileService.uploadFile(file, userHeader));
     }
 
@@ -38,9 +40,9 @@ public class FileController {
                 .body(data);
     }
 
-    @GetMapping
-    public ResponseEntity<List<String>> listFiles() {
-        return ResponseEntity.ok(fileService.listFiles());
+    @GetMapping({ "", "/" })
+    public ResponseEntity<List<FileResponseDto>> listFiles(@RequestHeader("X-User") String userHeader) {
+        return ResponseEntity.ok(fileService.listFiles(userHeader));
     }
 
     @DeleteMapping("/{filename}")

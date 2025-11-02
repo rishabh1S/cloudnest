@@ -1,4 +1,4 @@
-package com.example.file.model;
+package com.example.file.model.entity;
 
 import java.time.Instant;
 import java.util.UUID;
