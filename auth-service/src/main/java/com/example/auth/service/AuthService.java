@@ -50,4 +50,16 @@ public class AuthService {
         response.setToken(token);
         return response;
     }
+
+    public boolean verifyToken(String authHeader) {
+        if (authHeader == null || !authHeader.startsWith("Bearer "))
+            return false;
+        String token = authHeader.substring(7);
+        try {
+            jwtUtil.isTokenValid(token);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
 }

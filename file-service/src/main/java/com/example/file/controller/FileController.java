@@ -19,7 +19,7 @@ import com.google.common.net.HttpHeaders;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/api/files")
+@RequestMapping("/files")
 @RequiredArgsConstructor
 public class FileController {
     private final FileService fileService;
