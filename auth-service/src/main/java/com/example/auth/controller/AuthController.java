@@ -33,11 +33,15 @@ public class AuthController {
     }
 
     @GetMapping("/verify")
-    public ResponseEntity<Boolean> verifyToken(@RequestHeader("Authorization") String authHeader) {
-        boolean isValid = authService.verifyToken(authHeader);
-        if (isValid) {
-            return ResponseEntity.ok().build();
-        } else {
+    public ResponseEntity<Void> verifyToken(@RequestHeader(value = "Authorization", required = false) String authHeader) {
+        try {
+            String userJson = authService.verifyAndExtractUser(authHeader);
+
+            return ResponseEntity.ok()
+                    .header("X-User", userJson)
+                    .build();
+
+        } catch (Exception e) {
             return ResponseEntity.status(401).build();
         }
     }

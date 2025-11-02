@@ -6,8 +6,6 @@ import java.util.List;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -17,6 +15,7 @@ import com.example.file.model.FileMetadata;
 import com.example.file.model.User;
 import com.example.file.repository.FileMetadataRepository;
 import com.example.file.repository.UserRepository;
+import com.example.file.utils.JsonUtils;
 
 import io.minio.GetObjectArgs;
 import io.minio.ListObjectsArgs;
@@ -40,10 +39,11 @@ public class FileService {
     @Value("${minio.bucket}")
     private String bucket;
 
-    public String uploadFile(MultipartFile file) {
+    public String uploadFile(MultipartFile file, String userHeader) {
         log.info("Uploading file: {}", file.getOriginalFilename());
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String email = auth.getName();
+        User user = JsonUtils.fromJson(userHeader, User.class);
+        log.info("Request from user: {}", user.getEmail());
+        String email = user.getEmail();
 
         User owner = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UserNotFoundException("User not found"));

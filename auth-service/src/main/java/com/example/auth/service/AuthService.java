@@ -1,5 +1,7 @@
 package com.example.auth.service;
 
+import java.util.UUID;
+
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -7,11 +9,13 @@ import com.example.auth.config.JwtUtil;
 import com.example.auth.exception.InvalidCredentialsException;
 import com.example.auth.exception.UserAlreadyExistsException;
 import com.example.auth.exception.UserNotFoundException;
+import com.example.auth.model.dto.AuthenticatedUser;
 import com.example.auth.model.dto.LoginRequest;
 import com.example.auth.model.dto.LoginResponse;
 import com.example.auth.model.dto.SignupRequest;
 import com.example.auth.model.entity.User;
 import com.example.auth.repository.UserRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -52,6 +56,7 @@ public class AuthService {
     }
 
     public boolean verifyToken(String authHeader) {
+        log.info("Verifying token: {}", authHeader);
         if (authHeader == null || !authHeader.startsWith("Bearer "))
             return false;
         String token = authHeader.substring(7);
@@ -62,4 +67,31 @@ public class AuthService {
             return false;
         }
     }
+
+    public String verifyAndExtractUser(String authHeader) {
+        log.info("Verifying token: {}", authHeader);
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            throw new RuntimeException("Missing or invalid Authorization header");
+        }
+
+        String token = authHeader.substring(7);
+        try {
+            if (!jwtUtil.isTokenValid(token)) {
+                throw new RuntimeException("Invalid token");
+            }
+
+            UUID id = jwtUtil.extractUserId(token);
+            String name = jwtUtil.extractName(token);
+            String email = jwtUtil.extractEmail(token);
+
+            AuthenticatedUser user = new AuthenticatedUser(id, name, email);
+
+            ObjectMapper mapper = new ObjectMapper();
+            return mapper.writeValueAsString(user); // serialize to JSON
+        } catch (Exception e) {
+            log.error("Token verification failed", e);
+            throw new RuntimeException("Token verification failed");
+        }
+    }
+
 }

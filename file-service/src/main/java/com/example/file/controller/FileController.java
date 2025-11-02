@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -25,8 +26,8 @@ public class FileController {
     private final FileService fileService;
 
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<String> upload(@RequestParam MultipartFile file) {
-        return ResponseEntity.ok(fileService.uploadFile(file));
+    public ResponseEntity<String> upload(@RequestParam MultipartFile file, @RequestHeader("X-User") String userHeader) {
+        return ResponseEntity.ok(fileService.uploadFile(file, userHeader));
     }
 
     @GetMapping("/download/{filename}")
