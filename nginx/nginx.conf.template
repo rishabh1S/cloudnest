@@ -47,6 +47,7 @@ http {
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
             proxy_set_header X-Forwarded-Proto $scheme;
             proxy_set_header X-User $user_header;
+            client_max_body_size 200M;
         }
 
         # ----------- LINK Service -----------
@@ -69,6 +70,7 @@ http {
             proxy_pass http://auth_service/auth/verify;
             proxy_set_header Host "auth-service.internal";
             proxy_set_header Authorization $http_authorization;
+            client_max_body_size 0;
             proxy_pass_request_body off;
             proxy_set_header Content-Length "";
             proxy_set_header X-Original-URI $request_uri;
