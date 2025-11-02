@@ -28,10 +28,11 @@ function formatBytes(bytes: number) {
 }
 
 export function FileTable() {
-  const { data, isLoading } = useSWR<FileItem[]>("/files", swrFetcher)
+  const { data, isLoading } = useSWR<FileItem[]>("/files/", swrFetcher)
   const [query, setQuery] = useState("")
   const { toast } = useToast()
   const [selected, setSelected] = useState<FileItem | null>(null)
+
 
   const filtered = useMemo(() => {
     const q = query.toLowerCase()
@@ -59,7 +60,7 @@ export function FileTable() {
 
   async function onDelete(id: string) {
     try {
-      await api(`/files/${id}`, { method: "DELETE" })
+      await api("/files/${id}", { method: "DELETE" })
       mutate("/files")
       toast({ title: "File deleted" })
     } catch (e: any) {

@@ -1,55 +1,56 @@
-"use client"
+"use client";
 
-import { useCallback, useRef, useState } from "react"
-import { useDropzone } from "react-dropzone"
-import { Button } from "@/components/ui/button"
-import { Progress } from "@/components/ui/progress"
-import { useToast } from "@/hooks/use-toast"
-import { mutate } from "swr"
+import { useCallback, useRef, useState } from "react";
+import { useDropzone } from "react-dropzone";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { useToast } from "@/hooks/use-toast";
+import { mutate } from "swr";
+import { api } from "@/lib/api";
 
 export function UploadDropzone() {
-  const inputRef = useRef<HTMLInputElement | null>(null)
-  const [progress, setProgress] = useState<number | null>(null)
-  const [link, setLink] = useState<string | null>(null)
-  const { toast } = useToast()
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const [progress, setProgress] = useState<number | null>(null);
+  const [link, setLink] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const onDrop = useCallback(
     async (acceptedFiles: File[]) => {
-      if (!acceptedFiles.length) return
-      const file = acceptedFiles[0]
-      setProgress(5)
-      setLink(null)
+      if (!acceptedFiles.length) return;
+      const file = acceptedFiles[0];
+      setProgress(5);
+      setLink(null);
       try {
-        const fd = new FormData()
-        fd.append("file", file)
-        const res = await fetch("/files/upload", {
+        const fd = new FormData();
+        fd.append("file", file);
+        const res = await api("/files/upload", {
           method: "POST",
           body: fd,
-        })
-        setProgress(80)
-        if (!res.ok) throw new Error(await res.text())
-        const data = (await res.json()) as { fileId: string; url: string }
-        setProgress(100)
-        setLink(data.url)
-        mutate("/files")
-        toast({ title: "Upload complete" })
+        });
+        setProgress(80);
+        if (!res.ok) throw new Error(await res.text());
+        const data = (await res.json()) as { fileId: string; url: string };
+        setProgress(100);
+        setLink(data.url);
+        mutate("/files");
+        toast({ title: "Upload complete" });
       } catch (e: any) {
-        toast({ title: "Upload failed", description: e.message })
-        setProgress(null)
+        toast({ title: "Upload failed", description: e.message });
+        setProgress(null);
       }
     },
-    [toast],
-  )
+    [toast]
+  );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     multiple: false,
     onDrop,
-  })
+  });
 
   function chooseFile() {
-    inputRef.current?.click()
+    inputRef.current?.click();
   }
-  
+
   return (
     <div className="space-y-4">
       <div
@@ -73,8 +74,8 @@ export function UploadDropzone() {
             type="file"
             className="hidden"
             onChange={(e) => {
-              const f = e.target.files?.[0]
-              if (f) onDrop([f])
+              const f = e.target.files?.[0];
+              if (f) onDrop([f]);
             }}
           />
         </div>
@@ -91,13 +92,15 @@ export function UploadDropzone() {
         <div className="rounded-xl border bg-card p-4">
           <p className="text-sm">File uploaded successfully.</p>
           <div className="mt-2 flex items-center gap-2">
-            <code className="rounded-md bg-muted px-2 py-1 text-xs">{link}</code>
+            <code className="rounded-md bg-muted px-2 py-1 text-xs">
+              {link}
+            </code>
             <Button
               size="sm"
               variant="outline"
               onClick={async () => {
-                await navigator.clipboard.writeText(link)
-                toast({ title: "Copied hosted link" })
+                await navigator.clipboard.writeText(link);
+                toast({ title: "Copied hosted link" });
               }}
             >
               Copy Hosted Link
@@ -106,5 +109,5 @@ export function UploadDropzone() {
         </div>
       )}
     </div>
-  )
+  );
 }

@@ -1,6 +1,6 @@
 import { getToken } from "./auth"
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:80/api"
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost"
 
 export async function api(input: RequestInfo, init?: RequestInit) {
   const token = getToken()
@@ -12,6 +12,9 @@ export async function api(input: RequestInfo, init?: RequestInit) {
 
   // Resolve relative URLs to backend
   const url = typeof input === "string" && input.startsWith("/") ? `${API_BASE}${input}` : input
+
+  console.log("API Request:", url, init)
+  console.log("API Headers:", Object.fromEntries(headers.entries()))
 
   const res = await fetch(url, { ...init, headers })
   if (!res.ok) {
