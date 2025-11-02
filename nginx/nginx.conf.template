@@ -26,18 +26,7 @@ http {
 
         # ----------- AUTH Service -----------
         location /auth/ {
-            if ($request_method = 'OPTIONS') {
-                add_header 'Access-Control-Allow-Origin' "$frontend_origin" always;
-                add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, OPTIONS' always;
-                add_header 'Access-Control-Allow-Headers' 'Authorization,Content-Type' always;
-                add_header 'Access-Control-Max-Age' 1728000;
-                add_header 'Content-Type' 'text/plain; charset=utf-8';
-                add_header 'Content-Length' 0;
-                return 204;
-            }
-            add_header 'Access-Control-Allow-Origin' "$frontend_origin" always;
-            add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, OPTIONS' always;
-            add_header 'Access-Control-Allow-Headers' 'Authorization,Content-Type' always;
+            include /etc/nginx/cors.conf;
 
             proxy_pass http://auth_service;
             proxy_set_header Host $host;
@@ -48,54 +37,37 @@ http {
 
         # ----------- FILE Service -----------
         location /files/ {
-            if ($request_method = 'OPTIONS') {
-                add_header 'Access-Control-Allow-Origin' "$frontend_origin" always;
-                add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, OPTIONS' always;
-                add_header 'Access-Control-Allow-Headers' 'Authorization,Content-Type' always;
-                add_header 'Access-Control-Max-Age' 1728000;
-                add_header 'Content-Type' 'text/plain; charset=utf-8';
-                add_header 'Content-Length' 0;
-                return 204;
-            }
-            add_header 'Access-Control-Allow-Origin' "$frontend_origin" always;
-            add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, OPTIONS' always;
-            add_header 'Access-Control-Allow-Headers' 'Authorization,Content-Type' always;
+            include /etc/nginx/cors.conf;
 
             auth_request /auth_verify;
+            auth_request_set $user_header $upstream_http_x_user;
             proxy_pass http://file_service;
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
             proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_set_header X-User $user_header;
         }
 
         # ----------- LINK Service -----------
         location /links/ {
-            if ($request_method = 'OPTIONS') {
-                add_header 'Access-Control-Allow-Origin' "$frontend_origin" always;
-                add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, OPTIONS' always;
-                add_header 'Access-Control-Allow-Headers' 'Authorization,Content-Type' always;
-                add_header 'Access-Control-Max-Age' 1728000;
-                add_header 'Content-Type' 'text/plain; charset=utf-8';
-                add_header 'Content-Length' 0;
-                return 204;
-            }
-            add_header 'Access-Control-Allow-Origin' "$frontend_origin" always;
-            add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, OPTIONS' always;
-            add_header 'Access-Control-Allow-Headers' 'Authorization,Content-Type' always;
+            include /etc/nginx/cors.conf;
 
             auth_request /auth_verify;
+            auth_request_set $user_header $upstream_http_x_user;
             proxy_pass http://link_service;
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
             proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_set_header X-User $user_header;
         }
 
         # ----------- AUTH verification subrequest -----------
         location = /auth_verify {
             internal;
             proxy_pass http://auth_service/auth/verify;
+            proxy_set_header Host "auth-service.internal";
             proxy_set_header Authorization $http_authorization;
             proxy_pass_request_body off;
             proxy_set_header Content-Length "";
