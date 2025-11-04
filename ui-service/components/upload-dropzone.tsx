@@ -4,15 +4,14 @@ import { useCallback, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { useToast } from "@/hooks/use-toast";
 import { mutate } from "swr";
 import { api } from "@/lib/api";
+import { toast } from "sonner";
 
 export function UploadDropzone() {
   const [progress, setProgress] = useState<number>(0);
   const [isUploading, setIsUploading] = useState(false);
   const [link, setLink] = useState<string | null>(null);
-  const { toast } = useToast();
 
   const handleDrop = useCallback(
     async (acceptedFiles: File[]) => {
@@ -76,9 +75,9 @@ export function UploadDropzone() {
 
         setLink(data.url);
         mutate("/files");
-        toast({ title: "Upload complete" });
+        toast.success("Upload complete");
       } catch (err: any) {
-        toast({ title: "Upload failed", description: err.message });
+        toast.error("Upload failed", { description: err.message });
         setProgress(0);
       } finally {
         setIsUploading(false);
@@ -143,7 +142,7 @@ export function UploadDropzone() {
               variant="outline"
               onClick={async () => {
                 await navigator.clipboard.writeText(link);
-                toast({ title: "Copied hosted link" });
+                toast("Copied hosted link");
               }}
             >
               Copy Link

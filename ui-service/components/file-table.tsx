@@ -13,10 +13,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useToast } from "@/hooks/use-toast";
 import { LuFileSearch } from "react-icons/lu";
 import { RiDeleteBin6Fill } from "react-icons/ri";
 import { FilePreviewDialog } from "./file-preview-dialog";
+import { toast } from "sonner";
 
 type FileItem = {
   id: string;
@@ -41,10 +41,33 @@ type FileTableProps = {
   viewMode: "list" | "icon" | "big-icon";
 };
 
+async function onCopy(id: string) {
+    try {
+      const res = await api("/links/generate", {
+        method: "POST",
+        body: JSON.stringify({ fileId: id }),
+      });
+      const url = (res as any)?.url;
+      await navigator.clipboard.writeText(url);
+      toast.success("Copied link to clipboard");
+    } catch (e: any) {
+      toast.error("Copy failed",{ description: e.message });
+    }
+  }
+
+  async function onDelete(id: string) {
+    try {
+      await api(`/files/${id}`, { method: "DELETE" });
+      mutate("/files/");
+      toast.success("File deleted");
+    } catch (e: any) {
+      toast.error("Delete failed",{ description: e.message });
+    }
+  }
+
 export function FileTable({ viewMode }: Readonly<FileTableProps>) {
   const { data, isLoading } = useSWR<FileItem[]>("/files/", swrFetcher);
   const [query, setQuery] = useState("");
-  const { toast } = useToast();
   const [selected, setSelected] = useState<FileItem | null>(null);
 
   const filtered = useMemo(() => {
@@ -56,30 +79,6 @@ export function FileTable({ viewMode }: Readonly<FileTableProps>) {
         new Date(f.createdAt).toLocaleString().toLowerCase().includes(q)
     );
   }, [data, query]);
-
-  async function onCopy(id: string) {
-    try {
-      const res = await api("/links/generate", {
-        method: "POST",
-        body: JSON.stringify({ fileId: id }),
-      });
-      const url = (res as any)?.url;
-      await navigator.clipboard.writeText(url);
-      toast({ title: "Copied link to clipboard" });
-    } catch (e: any) {
-      toast({ title: "Copy failed", description: e.message });
-    }
-  }
-
-  async function onDelete(id: string) {
-    try {
-      await api(`/files/${id}`, { method: "DELETE" });
-      mutate("/files/");
-      toast({ title: "File deleted" });
-    } catch (e: any) {
-      toast({ title: "Delete failed", description: e.message });
-    }
-  }
 
   if (isLoading) {
     return (

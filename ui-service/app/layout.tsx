@@ -4,6 +4,7 @@ import { GeistMono } from "geist/font/mono";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import { ThemeProvider } from "next-themes";
+import { Toaster } from "@/components/ui/sonner";
 
 export const metadata: Metadata = {
   title: "CloudNest",
@@ -25,6 +26,7 @@ export default function RootLayout({
           defaultTheme="dark"
           themes={["light", "dark"]}
         >
+          <Toaster position="top-right" richColors/>
           {children}
         </ThemeProvider>
         <Analytics />
