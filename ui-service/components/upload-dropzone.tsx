@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -14,64 +14,73 @@ export function UploadDropzone() {
   const [link, setLink] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const animateProgress = (target: number, speed = 5) => {
-    // Smoothly increments progress toward target
-    setProgress((prev) => {
-      if (prev < target) {
-        const diff = target - prev;
-        return prev + Math.max(1, diff / speed);
-      }
-      return prev;
-    });
-  };
-
-  // Smooth progress animation
-  useEffect(() => {
-    if (!isUploading) return;
-    const interval = setInterval(() => {
-      setProgress((prev) => {
-        if (prev < 90) return prev + Math.random() * 2; // idle animation
-        return prev;
-      });
-    }, 200);
-    return () => clearInterval(interval);
-  }, [isUploading]);
-
-  const onDrop = useCallback(
+  const handleDrop = useCallback(
     async (acceptedFiles: File[]) => {
       if (!acceptedFiles.length) return;
       const file = acceptedFiles[0];
       setIsUploading(true);
-      setProgress(5);
+      setProgress(0);
       setLink(null);
 
       try {
-        const fd = new FormData();
-        fd.append("file", file);
-
-        // Upload
-        const res = await api("/files/upload", {
+        // 1️⃣ Step 1: Request signed upload URL
+        const signRes = await api("/files/upload", {
           method: "POST",
-          body: fd,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            filename: file.name,
+            contentType: file.type,
+            size: file.size,
+          }),
         });
 
-        if (!res.ok) throw new Error(await res.text());
-        animateProgress(95);
+        if (!signRes.ok) throw new Error(await signRes.text());
+        const { uploadUrl, objectKey } = await signRes.json();
 
-        const data = (await res.json()) as { fileId: string; url: string };
+        // 2️⃣ Step 2: Upload file directly with progress tracking
+        await new Promise<void>((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          xhr.open("PUT", uploadUrl, true);
+          xhr.setRequestHeader("Content-Type", file.type);
 
-        animateProgress(100);
+          // Progress event handler
+          xhr.upload.onprogress = (event) => {
+            if (event.lengthComputable) {
+              const percent = (event.loaded / event.total) * 100;
+              setProgress(percent);
+            }
+          };
+
+          xhr.onload = () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+              setProgress(100);
+              resolve();
+            } else {
+              reject(new Error(`Upload failed with status ${xhr.status}`));
+            }
+          };
+
+          xhr.onerror = () => reject(new Error("Network error during upload"));
+          xhr.send(file);
+        });
+
+        // 3️⃣ Step 3: Notify backend that upload completed
+        const completeRes = await api("/files/complete", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ objectKey }),
+        });
+
+        if (!completeRes.ok) throw new Error(await completeRes.text());
+        const data = await completeRes.json();
+
         setLink(data.url);
         mutate("/files");
         toast({ title: "Upload complete" });
-
-        setTimeout(() => {
-          setIsUploading(false);
-          setProgress(100);
-        }, 500);
-      } catch (e: any) {
-        toast({ title: "Upload failed", description: e.message });
+      } catch (err: any) {
+        toast({ title: "Upload failed", description: err.message });
         setProgress(0);
+      } finally {
         setIsUploading(false);
       }
     },
@@ -80,7 +89,9 @@ export function UploadDropzone() {
 
   const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
     multiple: false,
-    onDrop,
+    onDrop: (acceptedFiles: File[]) => {
+      void handleDrop(acceptedFiles);
+    },
     noClick: true,
   });
 

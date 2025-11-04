@@ -3,19 +3,20 @@ package com.example.file.controller;
 import java.util.List;
 import java.util.UUID;
 
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.multipart.MultipartFile;
 
+import com.example.file.model.dto.CompleteUploadRequest;
 import com.example.file.model.dto.FileResponseDto;
+import com.example.file.model.dto.PresignedUrlRequest;
+import com.example.file.model.dto.PresignedUrlResponse;
 import com.example.file.repository.FileMetadataRepository;
 import com.example.file.service.FileService;
 import com.google.common.net.HttpHeaders;
@@ -29,10 +30,22 @@ public class FileController {
     private final FileService fileService;
     private final FileMetadataRepository fileMetadataRepository;
 
-    @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<String> upload(@RequestParam MultipartFile file,
+    @PostMapping("/upload")
+    public ResponseEntity<PresignedUrlResponse> signUpload(
+            @RequestBody PresignedUrlRequest req,
             @RequestHeader("X-User") String userHeader) {
-        return ResponseEntity.ok(fileService.uploadFile(file, userHeader));
+
+        return ResponseEntity.ok(
+            fileService.generatePresignedUrl(req.filename(), req.contentType(), req.size(), userHeader)
+        );
+    }
+
+    @PostMapping("/complete")
+    public ResponseEntity<FileResponseDto> completeUpload(
+            @RequestBody CompleteUploadRequest req,
+            @RequestHeader("X-User") String userHeader) {
+
+        return ResponseEntity.ok(fileService.completeUpload(req.objectKey(), userHeader));
     }
 
     @GetMapping("/download/{fileId}")

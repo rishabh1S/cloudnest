@@ -32,11 +32,23 @@ public class FileMetadata {
     @Column(name = "filename", nullable = false, length = 255)
     private String filename;
 
-    @Column(name = "url", nullable = false, length = 500)
-    private String url;
+    @Column(name = "object_key", nullable = false, unique = true)
+    private String objectKey; 
+
+    @Column(name = "url", nullable = false)
+    private String url; 
+
+    @Column(name = "thumbnail_url")
+    private String thumbnailUrl;
 
     @Column(name = "size", nullable = false)
     private Long size;
+
+    @Column(name = "mime_type", nullable = false)
+    private String mimeType;
+
+    @Column(name = "file_status", nullable = false)
+    private String fileStatus;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)

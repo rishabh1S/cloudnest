@@ -1,6 +1,7 @@
 package com.example.file.repository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -13,4 +14,5 @@ import com.example.file.model.entity.User;
 public interface FileMetadataRepository extends JpaRepository<FileMetadata, UUID> {
     List<FileMetadata> findByOwner(User owner);
     String findFilenameById(UUID id);
+    Optional<FileMetadata> findByObjectKey(String objectKey);
 }
