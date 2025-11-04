@@ -60,7 +60,7 @@ export function FileTable() {
 
   async function onDelete(id: string) {
     try {
-      await api("/files/${id}", { method: "DELETE" })
+      await api(`/files/${id}`, { method: "DELETE" })
       mutate("/files/")
       toast({ title: "File deleted" })
     } catch (e: any) {

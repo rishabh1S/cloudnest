@@ -1,6 +1,7 @@
 package com.example.file.controller;
 
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.example.file.model.dto.FileResponseDto;
+import com.example.file.repository.FileMetadataRepository;
 import com.example.file.service.FileService;
 import com.google.common.net.HttpHeaders;
 
@@ -25,6 +27,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class FileController {
     private final FileService fileService;
+    private final FileMetadataRepository fileMetadataRepository;
 
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<String> upload(@RequestParam MultipartFile file,
@@ -32,9 +35,10 @@ public class FileController {
         return ResponseEntity.ok(fileService.uploadFile(file, userHeader));
     }
 
-    @GetMapping("/download/{filename}")
-    public ResponseEntity<byte[]> download(@PathVariable String filename) {
-        byte[] data = fileService.downloadFile(filename);
+    @GetMapping("/download/{fileId}")
+    public ResponseEntity<byte[]> download(@PathVariable UUID fileId) {
+        byte[] data = fileService.downloadFile(fileId);
+        String filename = fileMetadataRepository.findFilenameById(fileId);
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
                 .body(data);
@@ -45,9 +49,9 @@ public class FileController {
         return ResponseEntity.ok(fileService.listFiles(userHeader));
     }
 
-    @DeleteMapping("/{filename}")
-    public ResponseEntity<Void> delete(@PathVariable String filename) {
-        fileService.deleteFile(filename);
+    @DeleteMapping("/{fileId}")
+    public ResponseEntity<Void> delete(@PathVariable UUID fileId, @RequestHeader("X-User") String userHeader) {
+        fileService.deleteFile(fileId, userHeader);
         return ResponseEntity.noContent().build();
     }
 }

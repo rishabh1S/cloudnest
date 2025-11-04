@@ -1,7 +1,6 @@
 package com.example.file.service;
 
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -19,12 +18,9 @@ import com.example.file.repository.UserRepository;
 import com.example.file.utils.JsonUtils;
 
 import io.minio.GetObjectArgs;
-import io.minio.ListObjectsArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
 import io.minio.RemoveObjectArgs;
-import io.minio.Result;
-import io.minio.messages.Item;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -49,7 +45,7 @@ public class FileService {
         User owner = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
 
-        String filename = UUID.randomUUID() + "-" + file.getOriginalFilename();
+        String filename = file.getOriginalFilename();
         try {
             minioClient.putObject(
                     PutObjectArgs.builder()
@@ -71,8 +67,12 @@ public class FileService {
         return filename;
     }
 
-    public byte[] downloadFile(String filename) {
-        log.info("Downloading file: {}", filename);
+    public byte[] downloadFile(UUID fileId) {
+        log.info("Downloading file with ID: {}", fileId);
+        FileMetadata fileMetadata = fileMetadataRepository.findById(fileId)
+                .orElseThrow(() -> new FileStorageException("File not found", new RuntimeException()));
+
+        String filename = fileMetadata.getFilename();
         try (InputStream stream = minioClient.getObject(
                 GetObjectArgs.builder().bucket(bucket).object(filename).build())) {
             return stream.readAllBytes();
@@ -114,13 +114,26 @@ public class FileService {
     }
 
     @Transactional
-    public void deleteFile(String filename) {
+    public void deleteFile(UUID fileId, String userHeader) {
         try {
+            User user = JsonUtils.fromJson(userHeader, User.class);
+            FileMetadata file = fileMetadataRepository.findById(fileId)
+                .orElseThrow(() -> new FileStorageException("File not found", new RuntimeException()));
+
+            // Check if user owns the file
+            if (!file.getOwner().getEmail().equals(user.getEmail())) {
+                throw new FileStorageException("Not authorized to delete this file", new RuntimeException());
+            }
+
             // 1: Delete from MinIO
             minioClient.removeObject(
-                    RemoveObjectArgs.builder().bucket(bucket).object(filename).build());
+                    RemoveObjectArgs.builder()
+                    .bucket(bucket)
+                    .object(file.getFilename())
+                    .build());
+
             // 2: Delete from DB
-            fileMetadataRepository.deleteByFilename(filename);
+            fileMetadataRepository.deleteById(fileId);
         } catch (Exception e) {
             throw new FileStorageException("Delete failed", e);
         }
