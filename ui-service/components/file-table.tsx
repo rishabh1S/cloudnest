@@ -24,7 +24,7 @@ type FileItem = {
   type: string;
   size: number;
   createdAt: string;
-  previewUrl?: string;
+  thumbnailUrl?: string;
 };
 
 function formatBytes(bytes: number) {
@@ -185,7 +185,7 @@ export function FileTable({ viewMode }: Readonly<FileTableProps>) {
           {/* Show file preview icon or default icon */}
           <div className="w-16 h-16 mb-3">
             <img
-              src={f.previewUrl || "/file-placeholder.jpg"}
+              src={f.thumbnailUrl || "/file-placeholder.jpg"}
               alt={f.name}
               className="object-cover w-full h-full rounded-lg"
             />

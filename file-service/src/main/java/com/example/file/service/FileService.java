@@ -1,8 +1,5 @@
 package com.example.file.service;
 
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.time.Instant;
 import java.util.List;
@@ -11,13 +8,10 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import javax.imageio.ImageIO;
-
-import org.imgscalr.Scalr;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import com.example.file.constant.FileConstant;
 import com.example.file.exception.FileStorageException;
 import com.example.file.exception.UserNotFoundException;
 import com.example.file.model.dto.FileResponseDto;
@@ -31,7 +25,6 @@ import com.example.file.utils.JsonUtils;
 import io.minio.GetObjectArgs;
 import io.minio.GetPresignedObjectUrlArgs;
 import io.minio.MinioClient;
-import io.minio.PutObjectArgs;
 import io.minio.RemoveObjectArgs;
 import io.minio.http.Method;
 import jakarta.transaction.Transactional;
@@ -45,19 +38,12 @@ public class FileService {
     private final MinioClient minioClient;
     private final FileMetadataRepository fileMetadataRepository;
     private final UserRepository userRepository;
+    private final ThumbnailService thumbnailService;
+    private static final Set<String> ALLOWED_TYPES = FileConstant.ALLOWED_TYPES;
 
     @Value("${minio.bucket}")
     private String bucket;
 
-    private static final Set<String> ALLOWED_TYPES = Set.of(
-            "image/jpeg", "image/png", "image/webp", "application/pdf",
-            "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            "application/vnd.ms-powerpoint",
-            "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-            "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            "text/plain", "application/zip");
-
-    /** Step 1: Generate presigned upload URL */
     public PresignedUrlResponse generatePresignedUrl(String filename, String contentType, Long size,
             String userHeader) {
         if (!ALLOWED_TYPES.contains(contentType)) {
@@ -86,7 +72,7 @@ public class FileService {
             meta.setMimeType(contentType);
             meta.setFileStatus("UPLOADING");
             meta.setOwner(owner);
-            meta.setUrl("https://" + bucket + "/" + objectKey);
+            meta.setUrl("http://minio:9000/" + bucket + "/" + objectKey);
             meta.setCreatedAt(Instant.now());
             fileMetadataRepository.save(meta);
 
@@ -96,7 +82,6 @@ public class FileService {
         }
     }
 
-    /** Step 2: Complete upload + trigger thumbnail job */
     @Transactional
     public FileResponseDto completeUpload(String objectKey, String userHeader) {
         User user = JsonUtils.fromJson(userHeader, User.class);
@@ -114,50 +99,13 @@ public class FileService {
         fileMetadataRepository.save(meta);
 
         if (meta.getMimeType().startsWith("image/")) {
-            generateThumbnailAsync(meta);
+            thumbnailService.generateThumbnailAsync(meta);
         }
 
         return new FileResponseDto(meta.getId(), meta.getFilename(),
-                meta.getMimeType(), meta.getSize(), meta.getCreatedAt(), meta.getUrl());
+                meta.getMimeType(), meta.getSize(), meta.getCreatedAt(), meta.getThumbnailUrl());
     }
 
-    /** Step 3: Async thumbnail generator */
-    @Async
-    public void generateThumbnailAsync(FileMetadata file) {
-        try (InputStream input = minioClient.getObject(
-                GetObjectArgs.builder().bucket(bucket).object(file.getObjectKey()).build())) {
-
-            BufferedImage original = ImageIO.read(input);
-            if (original == null)
-                return;
-
-            BufferedImage thumbnail = Scalr.resize(original, 200);
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            ImageIO.write(thumbnail, "jpg", baos);
-            baos.flush();
-
-            String thumbKey = "thumbnails/" + file.getObjectKey() + ".jpg";
-            try (InputStream thumbStream = new ByteArrayInputStream(baos.toByteArray())) {
-                minioClient.putObject(PutObjectArgs.builder()
-                        .bucket(bucket)
-                        .object(thumbKey)
-                        .stream(thumbStream, baos.size(), -1)
-                        .contentType("image/jpeg")
-                        .build());
-            }
-
-            file.setThumbnailUrl("https://" + bucket + "/" + thumbKey);
-            file.setFileStatus("READY");
-            fileMetadataRepository.save(file);
-
-        } catch (Exception e) {
-            log.error("Thumbnail generation failed: {}", e.getMessage());
-            file.setFileStatus("FAILED");
-            fileMetadataRepository.save(file);
-        }
-    }
-
-    /** Step 4: List user files */
     public List<FileResponseDto> listFiles(String userHeader) {
         User user = JsonUtils.fromJson(userHeader, User.class);
         User owner = userRepository.findByEmail(user.getEmail())
@@ -166,11 +114,10 @@ public class FileService {
         return fileMetadataRepository.findByOwner(owner)
                 .stream()
                 .map(f -> new FileResponseDto(f.getId(), f.getFilename(), f.getMimeType(),
-                        f.getSize(), f.getCreatedAt(), f.getUrl()))
+                        f.getSize(), f.getCreatedAt(), f.getThumbnailUrl()))
                 .collect(Collectors.toList());
     }
 
-    /** Step 5: Delete */
     @Transactional
     public void deleteFile(UUID fileId, String userHeader) {
         User user = JsonUtils.fromJson(userHeader, User.class);
@@ -193,7 +140,6 @@ public class FileService {
         }
     }
 
-    /** Step 6: Download */
     public byte[] downloadFile(UUID fileId) {
         log.info("Downloading file with ID: {}", fileId);
         FileMetadata fileMetadata = fileMetadataRepository.findById(fileId)

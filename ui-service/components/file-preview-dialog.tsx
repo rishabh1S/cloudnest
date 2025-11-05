@@ -18,7 +18,7 @@ type Props = {
     id: string;
     name: string;
     type: string;
-    previewUrl?: string;
+    thumbnailUrl?: string;
   };
   onDeleted: () => void;
 };
@@ -70,9 +70,9 @@ export function FilePreviewDialog({
         </DialogHeader>
         <div className="grid gap-4">
           <div className="rounded-xl border bg-muted/40 p-2">
-            {isImage && file.previewUrl ? (
+            {isImage && file.thumbnailUrl ? (
               <img
-                src={file.previewUrl || "/placeholder.svg"}
+                src={file.thumbnailUrl || "/placeholder.svg"}
                 alt={file.name}
                 className="mx-auto max-h-[60vh] w-auto rounded-lg object-contain"
               />

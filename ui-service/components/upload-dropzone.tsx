@@ -23,7 +23,7 @@ export function UploadDropzone() {
 
       try {
         // 1️⃣ Step 1: Request signed upload URL
-        const signRes = await api("/files/upload", {
+        const { presignedUrl: uploadUrl, objectKey } = await api("/files/upload", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -32,9 +32,6 @@ export function UploadDropzone() {
             size: file.size,
           }),
         });
-
-        if (!signRes.ok) throw new Error(await signRes.text());
-        const { uploadUrl, objectKey } = await signRes.json();
 
         // 2️⃣ Step 2: Upload file directly with progress tracking
         await new Promise<void>((resolve, reject) => {
@@ -64,19 +61,17 @@ export function UploadDropzone() {
         });
 
         // 3️⃣ Step 3: Notify backend that upload completed
-        const completeRes = await api("/files/complete", {
+        const data = await api("/files/complete", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ objectKey }),
         });
 
-        if (!completeRes.ok) throw new Error(await completeRes.text());
-        const data = await completeRes.json();
-
         setLink(data.url);
         mutate("/files");
         toast.success("Upload complete");
       } catch (err: any) {
+        console.log("IDHAR DEKHO: ",err);
         toast.error("Upload failed", { description: err.message });
         setProgress(0);
       } finally {
