@@ -4,16 +4,20 @@ set -e
 echo "⏳ Waiting for MinIO to start..."
 sleep 5
 
-echo "✅ Creating bucket: ${MINIO_BUCKET}"
+echo "🔗 Connecting to MinIO..."
+mc alias set local http://localhost:9000 "${MINIO_ACCESS_KEY}" "${MINIO_SECRET_KEY}" >/dev/null 2>&1
 
-# Add alias for local MinIO instance
-mc alias set local http://localhost:9000 "${MINIO_ACCESS_KEY}" "${MINIO_SECRET_KEY}"
+# Check if bucket exists
+if mc stat local/${MINIO_BUCKET} >/dev/null 2>&1; then
+  echo "✅ Bucket '${MINIO_BUCKET}' already exists. Skipping creation."
+else
+  echo "📦 Creating new bucket: ${MINIO_BUCKET}"
+  mc mb local/${MINIO_BUCKET}
+fi
 
-# Create bucket if not exists
-mc mb --ignore-existing local/${MINIO_BUCKET}
-
-# Create public-read policy JSON
-cat > /tmp/public-policy.json <<EOF
+# Create a temporary policy file
+POLICY_FILE="/tmp/public-policy.json"
+cat > "$POLICY_FILE" <<EOF
 {
   "Version": "2012-10-17",
   "Statement": [
@@ -27,7 +31,10 @@ cat > /tmp/public-policy.json <<EOF
 }
 EOF
 
-# Apply public policy
-mc anonymous set-json /tmp/public-policy.json local/${MINIO_BUCKET}
+# Apply policy
+echo "🔓 Applying public-read policy to '${MINIO_BUCKET}'..."
+mc anonymous set-json "$POLICY_FILE" local/${MINIO_BUCKET}
+echo "✅ Public policy applied successfully."
+rm -f "$POLICY_FILE"
 
-echo "🎉 Bucket ${MINIO_BUCKET} is now public for GET access."
+echo "🎉 Bucket setup completed: ${MINIO_BUCKET}"

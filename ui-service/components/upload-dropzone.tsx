@@ -71,7 +71,6 @@ export function UploadDropzone() {
         mutate("/files");
         toast.success("Upload complete");
       } catch (err: any) {
-        console.log("IDHAR DEKHO: ",err);
         toast.error("Upload failed", { description: err.message });
         setProgress(0);
       } finally {

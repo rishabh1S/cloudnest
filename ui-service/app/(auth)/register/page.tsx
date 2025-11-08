@@ -18,6 +18,7 @@ import { Label } from "@/components/ui/label";
 import { setToken } from "@/lib/auth";
 import { Cloud } from "lucide-react";
 import { toast } from "sonner";
+import { api } from "@/lib/api";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -25,19 +26,16 @@ export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const API_BASE = process.env.NEXT_PUBLIC_API_URL;
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setIsLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/auth/register`, {
+      const data = await api("/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, email, password }),
       });
-      if (!res.ok) throw new Error(await res.text());
-      const data = (await res.json()) as { token: string };
       setToken(data.token);
       toast.success("Account created successfully!");
       router.replace("/files");

@@ -18,6 +18,7 @@ import { Label } from "@/components/ui/label";
 import { setToken } from "@/lib/auth";
 import { Cloud } from "lucide-react";
 import { toast } from "sonner";
+import { api } from "@/lib/api";
 
 export const dynamic = "force-dynamic";
 
@@ -28,19 +29,16 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const API_BASE = process.env.NEXT_PUBLIC_API_URL;
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setIsLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/auth/login`, {
+      const data = await api("/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
-      if (!res.ok) throw new Error(await res.text());
-      const data = (await res.json()) as { token: string };
       setToken(data.token);
       toast.success("Welcome back!");
       router.replace(next);
@@ -83,17 +81,25 @@ export default function LoginPage() {
                 className="glass"
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="glass"
-              />
+            <div className="flex flex-col space-y-1">
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="glass"
+                />
+              </div>
+              <Link
+                href="/forgot-password"
+                className="text-end text-sm text-primary hover:underline font-medium"
+              >
+                Forgot password?
+              </Link>
             </div>
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? "Signing in..." : "Sign In"}
