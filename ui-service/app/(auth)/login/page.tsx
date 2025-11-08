@@ -19,6 +19,7 @@ import { setToken } from "@/lib/auth";
 import { Cloud } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
+import { PasswordInput } from "@/components/ui/password-input";
 
 export const dynamic = "force-dynamic";
 
@@ -82,18 +83,15 @@ export default function LoginPage() {
               />
             </div>
             <div className="flex flex-col space-y-1">
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  className="glass"
-                />
-              </div>
+              <PasswordInput
+                id="password"
+                label="Password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="glass"
+              />
               <Link
                 href="/forgot-password"
                 className="text-end text-sm text-primary hover:underline font-medium"
