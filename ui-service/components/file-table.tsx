@@ -24,8 +24,12 @@ type FileItem = {
   type: string;
   size: number;
   createdAt: string;
-  thumbnailUrl?: string;
+  variants: Record<string, string>;
 };
+
+function getThumbnailUrl(file: FileItem) {
+  return file.variants?.thumbnail || file.variants?.original || "/file-placeholder.jpg";
+}
 
 function formatBytes(bytes: number) {
   if (bytes === 0) return "0 B";
@@ -185,7 +189,7 @@ export function FileTable({ viewMode }: Readonly<FileTableProps>) {
           {/* Show file preview icon or default icon */}
           <div className="w-16 h-16 mb-3">
             <img
-              src={f.thumbnailUrl || "/file-placeholder.jpg"}
+              src={getThumbnailUrl(f)}
               alt={f.name}
               className="object-cover w-full h-full rounded-lg"
             />

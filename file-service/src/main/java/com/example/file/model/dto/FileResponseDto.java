@@ -1,6 +1,7 @@
 package com.example.file.model.dto;
 
 import java.time.Instant;
+import java.util.Map;
 import java.util.UUID;
 
 public record FileResponseDto(
@@ -9,5 +10,5 @@ public record FileResponseDto(
     String type,
     long size,
     Instant createdAt,
-    String thumbnailUrl
+    Map<String, String> variants
 ) {}
