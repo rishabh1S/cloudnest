@@ -14,11 +14,11 @@ import {
 } from "@/components/ui/select";
 
 export default function FilesPage() {
-  const [viewMode, setViewMode] = useState<"list" | "icon" | "big-icon">(
+  const [viewMode, setViewMode] = useState<"list" | "icon" | "gallery">(
     "list"
   );
 
-  const handleViewChange = (view: "list" | "icon" | "big-icon") => {
+  const handleViewChange = (view: "list" | "icon" | "gallery") => {
     setViewMode(view);
   };
 
@@ -55,7 +55,7 @@ export default function FilesPage() {
               <SelectItem value="big-icon">
                 <div className="flex items-center gap-2">
                   <LuImage className="w-4 h-4" />
-                  Big Icon View
+                  Gallery View
                 </div>
               </SelectItem>
             </SelectGroup>

@@ -36,8 +36,7 @@ public class FileController {
             @RequestHeader("X-User") String userHeader) {
 
         return ResponseEntity.ok(
-            fileService.generatePresignedUrl(req.filename(), req.contentType(), req.size(), userHeader)
-        );
+                fileService.generatePresignedUrl(req.filename(), req.contentType(), req.size(), userHeader));
     }
 
     @PostMapping("/complete")
@@ -51,9 +50,13 @@ public class FileController {
     @GetMapping("/download/{fileId}")
     public ResponseEntity<byte[]> download(@PathVariable UUID fileId) {
         byte[] data = fileService.downloadFile(fileId);
+
+        // Get original filename
         String filename = fileMetadataRepository.findFilenameById(fileId);
+
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .header(HttpHeaders.CONTENT_TYPE, "application/octet-stream") 
                 .body(data);
     }
 
