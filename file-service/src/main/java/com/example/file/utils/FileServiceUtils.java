@@ -1,12 +1,14 @@
-package com.example.file.constant;
+package com.example.file.utils;
 
 import java.util.Set;
 
 import org.springframework.stereotype.Component;
 
 @Component
-public class FileConstant {
-    private FileConstant() {}
+public class FileServiceUtils {
+   
+    private FileServiceUtils() {
+    }
 
     public static final Set<String> ALLOWED_TYPES = Set.of(
             // Images
@@ -37,4 +39,14 @@ public class FileConstant {
             "video/quicktime", 
             "video/mpeg" 
     );
+
+    public static boolean isDocumentType(String mimeType) {
+    return mimeType.equals("application/msword") ||
+           mimeType.equals("application/vnd.openxmlformats-officedocument.wordprocessingml.document") ||
+           mimeType.equals("application/vnd.ms-excel") ||
+           mimeType.equals("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet") ||
+           mimeType.equals("application/vnd.ms-powerpoint") ||
+           mimeType.equals("application/vnd.openxmlformats-officedocument.presentationml.presentation");
+}
+
 }

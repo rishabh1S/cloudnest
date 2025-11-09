@@ -4,7 +4,6 @@ import java.io.InputStream;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -13,20 +12,21 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
-import com.example.file.constant.FileConstant;
-import com.example.file.enums.FileStatus;
 import com.example.file.exception.FileStorageException;
 import com.example.file.exception.UserNotFoundException;
+import com.example.file.model.dto.FileJob;
 import com.example.file.model.dto.FileResponseDto;
 import com.example.file.model.dto.FileUpdateRequest;
-import com.example.file.model.dto.ImageJob;
 import com.example.file.model.dto.PresignedUrlResponse;
 import com.example.file.model.entity.FileMetadata;
 import com.example.file.model.entity.FileVariant;
 import com.example.file.model.entity.User;
+import com.example.file.model.enums.FileStatus;
+import com.example.file.model.enums.JobType;
 import com.example.file.repository.FileMetadataRepository;
 import com.example.file.repository.FileVariantRepository;
 import com.example.file.repository.UserRepository;
+import com.example.file.utils.FileServiceUtils;
 import com.example.file.utils.JsonUtils;
 
 import io.minio.GetObjectArgs;
@@ -47,8 +47,12 @@ public class FileService {
     private final UserRepository userRepository;
     private final FileVariantRepository fileVariantRepository;
     private final RedisTemplate<String, Object> redisTemplate;
+    private static final String USER_NOT_FOUND = "User not found";
+    private static final String FILE_NOT_FOUND = "File not found";
     private static final String IMAGE_QUEUE = "image:variant:queue";
-    private static final Set<String> ALLOWED_TYPES = FileConstant.ALLOWED_TYPES;
+    private static final String PDF_QUEUE = "pdf:preview:queue";
+    private static final String DOC_QUEUE = "doc:preview:queue";
+    private static final String VIDEO_QUEUE = "video:thumbnail:queue";
 
     @Value("${minio.bucket}")
     private String bucket;
@@ -58,13 +62,13 @@ public class FileService {
 
     public PresignedUrlResponse generatePresignedUrl(String filename, String contentType, Long size,
             String userHeader) {
-        if (!ALLOWED_TYPES.contains(contentType)) {
+        if (!FileServiceUtils.ALLOWED_TYPES.contains(contentType)) {
             throw new FileStorageException("File type not allowed", new RuntimeException());
         }
 
         User user = JsonUtils.fromJson(userHeader, User.class);
         User owner = userRepository.findByEmail(user.getEmail())
-                .orElseThrow(() -> new UserNotFoundException("User not found"));
+                .orElseThrow(() -> new UserNotFoundException(USER_NOT_FOUND));
 
         String objectKey = owner.getId() + "/" + UUID.randomUUID() + "_" + filename;
 
@@ -98,10 +102,10 @@ public class FileService {
     public FileResponseDto completeUpload(String objectKey, String userHeader) {
         User user = JsonUtils.fromJson(userHeader, User.class);
         User owner = userRepository.findByEmail(user.getEmail())
-                .orElseThrow(() -> new UserNotFoundException("User not found"));
+                .orElseThrow(() -> new UserNotFoundException(USER_NOT_FOUND));
 
         FileMetadata meta = fileMetadataRepository.findByObjectKey(objectKey)
-                .orElseThrow(() -> new FileStorageException("File not found", new RuntimeException()));
+                .orElseThrow(() -> new FileStorageException(FILE_NOT_FOUND, new RuntimeException()));
 
         if (!meta.getOwner().getId().equals(owner.getId())) {
             throw new FileStorageException("Unauthorized upload confirmation", new RuntimeException());
@@ -112,11 +116,14 @@ public class FileService {
 
         Map<String, String> variants = Map.of("original", meta.getUrl());
 
-        // Enqueue image job for worker if it's an image
         if (meta.getMimeType().startsWith("image/")) {
-            ImageJob job = new ImageJob(meta.getId(), meta.getObjectKey(), meta.getMimeType());
-            redisTemplate.convertAndSend(IMAGE_QUEUE, job);
-            log.info("Image job published for objectKey: {}", objectKey);
+            sendJob(meta, JobType.IMAGE, IMAGE_QUEUE);
+        } else if (meta.getMimeType().startsWith("video/")) {
+            sendJob(meta, JobType.VIDEO, VIDEO_QUEUE);
+        } else if (meta.getMimeType().equals("application/pdf")) {
+            sendJob(meta, JobType.PDF, PDF_QUEUE);
+        } else if (FileServiceUtils.isDocumentType(meta.getMimeType())) {
+            sendJob(meta, JobType.DOCUMENT, DOC_QUEUE);
         } else {
             meta.setFileStatus(FileStatus.COMPLETED.name());
             fileMetadataRepository.save(meta);
@@ -126,10 +133,15 @@ public class FileService {
                 meta.getSize(), meta.getCreatedAt(), variants);
     }
 
+    private void sendJob(FileMetadata meta, JobType jobType, String queue) {
+        FileJob job = new FileJob(meta.getId(), meta.getObjectKey(), meta.getMimeType(), jobType);
+        redisTemplate.convertAndSend(queue, job);
+    }
+
     @Transactional
     public void updateFileVariants(FileUpdateRequest updateRequest) {
         FileMetadata file = fileMetadataRepository.findById(updateRequest.getFileId())
-                .orElseThrow(() -> new FileStorageException("File not found", new RuntimeException()));
+                .orElseThrow(() -> new FileStorageException(FILE_NOT_FOUND, new RuntimeException()));
 
         // Clear old variants (in case of reprocessing)
         fileVariantRepository.deleteAll(fileVariantRepository.findByFile_Id(file.getId()));
@@ -153,7 +165,7 @@ public class FileService {
     public List<FileResponseDto> listFiles(String userHeader) {
         User user = JsonUtils.fromJson(userHeader, User.class);
         User owner = userRepository.findByEmail(user.getEmail())
-                .orElseThrow(() -> new UserNotFoundException("User not found"));
+                .orElseThrow(() -> new UserNotFoundException(USER_NOT_FOUND));
 
         return fileMetadataRepository.findByOwner(owner)
                 .stream()
@@ -175,7 +187,7 @@ public class FileService {
     public void deleteFile(UUID fileId, String userHeader) {
         User user = JsonUtils.fromJson(userHeader, User.class);
         FileMetadata file = fileMetadataRepository.findById(fileId)
-                .orElseThrow(() -> new FileStorageException("File not found", new RuntimeException()));
+                .orElseThrow(() -> new FileStorageException(FILE_NOT_FOUND, new RuntimeException()));
 
         if (!file.getOwner().getEmail().equals(user.getEmail())) {
             throw new FileStorageException("Not authorized to delete this file", new RuntimeException());
@@ -210,7 +222,7 @@ public class FileService {
     public byte[] downloadFile(UUID fileId) {
         log.info("Downloading file with ID: {}", fileId);
         FileMetadata fileMetadata = fileMetadataRepository.findById(fileId)
-                .orElseThrow(() -> new FileStorageException("File not found", new RuntimeException()));
+                .orElseThrow(() -> new FileStorageException(FILE_NOT_FOUND, new RuntimeException()));
 
         try (InputStream stream = minioClient.getObject(
                 GetObjectArgs.builder().bucket(bucket).object(fileMetadata.getObjectKey()).build())) {

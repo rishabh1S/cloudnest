@@ -1,13 +1,6 @@
 package com.example.worker_service.service;
 
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
-
-import javax.imageio.ImageIO;
-
-import org.imgscalr.Scalr;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -43,37 +36,21 @@ public class MinioStorageService {
         }
     }
 
-    /** Upload image variant */
-    public void uploadVariant(BufferedImage original, String objectKey, String variantKey, int size) {
-        try {
-            BufferedImage resized = Scalr.resize(original, size);
-
-            // Ensure RGB format
-            BufferedImage rgbImage = new BufferedImage(resized.getWidth(), resized.getHeight(),
-                    BufferedImage.TYPE_INT_RGB);
-            rgbImage.getGraphics().drawImage(resized, 0, 0, null);
-
-            // MinIO path: variants/{variantKey}/{objectKey}
-            String minioPath = "variants/" + variantKey + "/" + objectKey;
-
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            ImageIO.write(rgbImage, "jpg", baos);
-
-            try (InputStream is = new ByteArrayInputStream(baos.toByteArray())) {
-                minioClient.putObject(
-                        PutObjectArgs.builder()
-                                .bucket(bucket)
-                                .object(minioPath)
-                                .stream(is, baos.size(), -1)
-                                .contentType("image/jpeg")
-                                .build());
-            }
-
-            log.info("Uploaded variant '{}' for {}", variantKey, objectKey);
-        } catch (Exception e) {
-            throw new StorageException("Failed to upload variant for " + objectKey + " variant: " + variantKey, e);
-        }
+    public void uploadVariantStream(InputStream is, long size, String objectKey, String variantKey, String contentType) {
+    try {
+        String minioPath = String.format("variants/%s/%s", variantKey, objectKey);
+        minioClient.putObject(
+                PutObjectArgs.builder()
+                        .bucket(bucket)
+                        .object(minioPath)
+                        .stream(is, size, -1)
+                        .contentType(contentType)
+                        .build());
+        log.info("Uploaded {} variant for {}", variantKey, objectKey);
+    } catch (Exception e) {
+        throw new StorageException("Failed to upload variant stream for " + objectKey, e);
     }
+}
 
     /** Get size of variant */
     public long getSize(String objectKey, String variantKey) {

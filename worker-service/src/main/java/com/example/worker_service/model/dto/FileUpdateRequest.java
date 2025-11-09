@@ -1,4 +1,4 @@
-package com.example.worker_service.dto;
+package com.example.worker_service.model.dto;
 
 import java.util.List;
 import java.util.UUID;

@@ -12,8 +12,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class FileVariantDto {
-    private String variantKey;   // e.g. "thumbnail", "medium", "original"
+    private String variantKey;  
     private String url;
-    private Map<String, Object> transform; // { "w":150,"h":150,"fmt":"webp" }
+    private Map<String, Object> transform; 
     private Long sizeBytes;
 }

@@ -1,4 +1,4 @@
-package com.example.worker_service.enums;
+package com.example.worker_service.model.enums;
 
 
 import lombok.Getter;
