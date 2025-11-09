@@ -213,10 +213,6 @@ export function FileTable({ viewMode }: Readonly<FileTableProps>) {
             open={!!selected}
             onOpenChange={(v) => !v && setSelected(null)}
             file={selected}
-            onDeleted={() => {
-              setSelected(null);
-              mutate("/files/");
-            }}
           />
         )}
       </div>
@@ -331,10 +327,6 @@ export function FileTable({ viewMode }: Readonly<FileTableProps>) {
           open={!!selected}
           onOpenChange={(v) => !v && setSelected(null)}
           file={selected}
-          onDeleted={() => {
-            setSelected(null);
-            mutate("/files/");
-          }}
         />
       )}
     </div>
