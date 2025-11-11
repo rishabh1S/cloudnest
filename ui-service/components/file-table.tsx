@@ -58,6 +58,7 @@ function formatBytes(bytes: number) {
 
 type FileTableProps = {
   viewMode: "list" | "icon" | "gallery";
+  query: string;
 };
 
 async function onCopy(id: string) {
@@ -110,9 +111,8 @@ async function onDelete(id: string) {
   }
 }
 
-export function FileTable({ viewMode }: Readonly<FileTableProps>) {
+export function FileTable({ viewMode, query }: Readonly<FileTableProps>) {
   const { data, isLoading } = useSWR<FileItem[]>("/files/", swrFetcher);
-  const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<FileItem | null>(null);
 
   const filtered = useMemo(() => {
@@ -152,12 +152,6 @@ export function FileTable({ viewMode }: Readonly<FileTableProps>) {
   if (viewMode === "list") {
     return (
       <div className="space-y-4">
-        <Input
-          placeholder="Search files..."
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          className="max-w-xs"
-        />
         <div className="overflow-x-auto rounded-2xl border bg-card">
           <Table>
             <TableHeader>
@@ -255,13 +249,6 @@ export function FileTable({ viewMode }: Readonly<FileTableProps>) {
   // ------------------ GALLERY VIEW ------------------
   return (
     <div className="space-y-4">
-      <Input
-        placeholder="Search files..."
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        className="max-w-xs"
-      />
-
       {/* Main Preview */}
       {mainFile && (
         <div className="relative border rounded-xl shadow-md overflow-hidden w-full flex justify-center items-center">

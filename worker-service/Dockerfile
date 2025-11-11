@@ -16,8 +16,10 @@ RUN mvn clean package -DskipTests
 FROM eclipse-temurin:21-jdk
 WORKDIR /app
 
-# 🧠 Install ffmpeg
-RUN apt-get update && apt-get install -y ffmpeg && rm -rf /var/lib/apt/lists/*
+# Install LibreOffice (headless) and FFmpeg
+RUN apt-get update && \
+    apt-get install -y ffmpeg libreoffice-calc libreoffice-core libreoffice-draw libreoffice-impress libreoffice-writer && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Copy the built jar from build stage
 COPY --from=build /app/target/*.jar app.jar

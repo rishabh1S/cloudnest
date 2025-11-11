@@ -12,11 +12,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
 
 export default function FilesPage() {
   const [viewMode, setViewMode] = useState<"list" | "icon" | "gallery">(
     "list"
   );
+  const [query, setQuery] = useState("");
 
   const handleViewChange = (view: "list" | "icon" | "gallery") => {
     setViewMode(view);
@@ -25,11 +28,14 @@ export default function FilesPage() {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-pretty text-xl font-semibold">My Files</h2>
-          <p className="text-sm text-muted-foreground">
-            Browse, search, preview, and manage your files.
-          </p>
+        <div className="relative hidden md:flex items-center flex-1 max-w-md">
+        <Search className="absolute left-3 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Search files..."
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          className="pl-10 bg-card border-border focus:border-primary"
+        />
         </div>
 
         {/* Select Dropdown for View Mode */}
@@ -64,7 +70,7 @@ export default function FilesPage() {
       </div>
 
       {/* File Display */}
-      <FileTable viewMode={viewMode} />
+      <FileTable viewMode={viewMode} query={query} />
     </div>
   );
 }

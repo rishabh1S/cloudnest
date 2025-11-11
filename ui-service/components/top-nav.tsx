@@ -11,8 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { clearToken, getToken, parseToken } from "@/lib/auth";
 import { useRouter } from "next/navigation";
-import { Search, Bell, Sun, Moon, Monitor } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { Bell, Sun, Moon, Monitor } from "lucide-react";
 import { useTheme } from "next-themes";
 
 export function TopNav() {
@@ -29,16 +28,12 @@ export function TopNav() {
 
   return (
     <header className="sticky top-0 z-30 flex items-center justify-between border-b border-border bg-background/80 backdrop-blur-md px-6 py-4 min-w-full">
-      <div className="flex items-center gap-4 flex-1">
-        <div className="relative hidden md:flex items-center flex-1 max-w-md">
-          <Search className="absolute left-3 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search files..."
-            className="pl-10 bg-card border-border focus:border-primary"
-          />
+      <div>
+          <h2 className="text-pretty text-xl font-semibold">My Files</h2>
+          <p className="text-sm text-muted-foreground">
+            Browse, search, preview, and manage your files.
+          </p>
         </div>
-      </div>
-
       <div className="flex items-center gap-4">
         <button className="relative p-2 hover:bg-card rounded-lg transition-colors">
           <Bell className="h-5 w-5 text-muted-foreground hover:text-foreground" />

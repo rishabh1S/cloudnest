@@ -50,9 +50,9 @@ public class FileService {
     private static final String USER_NOT_FOUND = "User not found";
     private static final String FILE_NOT_FOUND = "File not found";
     private static final String IMAGE_QUEUE = "image:variant:queue";
+    private static final String VIDEO_QUEUE = "video:thumbnail:queue";
     private static final String PDF_QUEUE = "pdf:preview:queue";
     private static final String DOC_QUEUE = "doc:preview:queue";
-    private static final String VIDEO_QUEUE = "video:thumbnail:queue";
 
     @Value("${minio.bucket}")
     private String bucket;

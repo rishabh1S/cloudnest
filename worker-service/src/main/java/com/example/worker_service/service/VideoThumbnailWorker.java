@@ -21,6 +21,7 @@ import com.example.worker_service.model.dto.FileJob;
 import com.example.worker_service.model.dto.FileUpdateRequest;
 import com.example.worker_service.model.dto.FileVariantDto;
 import com.example.worker_service.model.enums.FileStatus;
+import com.example.worker_service.util.UpdateInternalUtils;
 import com.example.worker_service.util.VariantUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -34,11 +35,8 @@ public class VideoThumbnailWorker implements MessageListener {
 
     private final VariantUtils variantUtils;
     private final MinioStorageService minioStorageService;
-    private final RestTemplate restTemplate;
+    private final UpdateInternalUtils updateInternalUtils;
     private final ObjectMapper objectMapper;
-
-    @Value("${file.service.url}")
-    private String fileServiceUrl;
 
     @Override
     public void onMessage(Message message, byte[] pattern) {
@@ -81,11 +79,8 @@ public class VideoThumbnailWorker implements MessageListener {
                     .status(status)
                     .variants(variants)
                     .build();
-            try {
-                restTemplate.postForObject(fileServiceUrl + "/internal/update", update, Void.class);
-            } catch (Exception ex) {
-                log.error("Failed to update FileService for video fileId {}: {}", job.getFileId(), ex.getMessage(), ex);
-            }
+                    
+            updateInternalUtils.updateInternal(job, update);
         }
     }
 }
