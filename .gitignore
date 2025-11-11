@@ -35,8 +35,6 @@ build/
 
 # Spring specific
 spring.log
-application.yml
-application.properties
 
 # ============================
 # Next.js / Node.js

@@ -1,0 +1,25 @@
+spring:
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: create
+    show-sql: true
+    properties:
+      hibernate:
+        "[format_sql]": true
+  servlet:
+    multipart:
+      max-file-size: 200MB
+      max-request-size: 200MB
+  config:
+    import: optional:file:.env[.properties]
+
+server:
+  port: 8082
+
+base:
+  service:
+    url: ${BASE_URL}
