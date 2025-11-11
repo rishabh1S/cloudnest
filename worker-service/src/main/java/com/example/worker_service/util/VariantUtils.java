@@ -25,7 +25,6 @@ public class VariantUtils {
 
     private final MinioStorageService minioStorageService;
 
-    // Common image/video variant definitions
     private static final Map<String, Integer> VARIANT_SIZES = Map.of(
             "medium", 800,
             "thumbnail", 200);

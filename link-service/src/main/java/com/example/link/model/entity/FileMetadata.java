@@ -1,4 +1,4 @@
-package com.example.file.model.entity;
+package com.example.link.model.entity;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -23,6 +23,7 @@ import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
 
 @Entity
 @Data

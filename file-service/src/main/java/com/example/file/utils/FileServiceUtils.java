@@ -1,6 +1,8 @@
 package com.example.file.utils;
 
+import java.text.Normalizer;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import org.springframework.stereotype.Component;
 
@@ -8,6 +10,25 @@ import org.springframework.stereotype.Component;
 public class FileServiceUtils {
 
         private FileServiceUtils() {
+        }
+
+        private static final Pattern NON_ASCII = Pattern.compile("[^\\x00-\\x7F]");
+        private static final Pattern INVALID_CHARS = Pattern.compile("[^a-zA-Z0-9._-]");
+
+        public static String normalizeFilename(String filename) {
+                if (filename == null)
+                        return "unnamed";
+
+                String normalized = Normalizer.normalize(filename, Normalizer.Form.NFD);
+                normalized = NON_ASCII.matcher(normalized).replaceAll("");
+
+                normalized = INVALID_CHARS.matcher(normalized).replaceAll("_");
+
+                if (normalized.length() > 200) {
+                        normalized = normalized.substring(normalized.length() - 200, normalized.length());
+                }
+
+                return normalized;
         }
 
         public static final Set<String> ALLOWED_TYPES = Set.of(

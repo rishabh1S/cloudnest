@@ -70,7 +70,8 @@ public class FileService {
         User owner = userRepository.findByEmail(user.getEmail())
                 .orElseThrow(() -> new UserNotFoundException(USER_NOT_FOUND));
 
-        String objectKey = owner.getId() + "/" + UUID.randomUUID() + "_" + filename;
+        String safeFilename = FileServiceUtils.normalizeFilename(filename);
+        String objectKey = owner.getId() + "/" + UUID.randomUUID() + "_" + safeFilename;
 
         try {
             String uploadUrl = minioClient.getPresignedObjectUrl(
@@ -212,7 +213,6 @@ public class FileService {
                     log.warn("Failed to delete variant {} from MinIO", v.getVariantKey());
                 }
             });
-
             fileMetadataRepository.delete(file);
         } catch (Exception e) {
             throw new FileStorageException("Delete failed", e);

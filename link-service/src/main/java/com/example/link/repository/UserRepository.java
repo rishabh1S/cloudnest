@@ -6,9 +6,9 @@ import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import com.example.link.model.entity.Link;
+import com.example.link.model.entity.User;
 
 @Repository
-public interface LinkRepository extends JpaRepository<Link, UUID> {
-    Optional<Link> findByToken(String token);
+public interface UserRepository extends JpaRepository<User, UUID> {
+    Optional<User> findByEmail(String email);
 }

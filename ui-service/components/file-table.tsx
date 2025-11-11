@@ -3,7 +3,6 @@
 import { useMemo, useState } from "react";
 import useSWR, { mutate } from "swr";
 import { swrFetcher, api } from "@/lib/api";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -18,6 +17,7 @@ import { RiDeleteBin6Fill, RiDownloadLine, RiLinkM } from "react-icons/ri";
 import { FilePreviewDialog } from "./file-preview-dialog";
 import { toast } from "sonner";
 import { getToken } from "@/lib/auth";
+import { LinkFormDialog } from "./link-form-dialog";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL;
 
@@ -40,9 +40,7 @@ function getThumbnailUrl(file: FileItem) {
 
 function getMediumUrl(file: FileItem) {
   return (
-    file.variants?.medium ||
-    file.variants?.original ||
-    "/file-placeholder.jpg"
+    file.variants?.medium || file.variants?.original || "/file-placeholder.jpg"
   );
 }
 
@@ -60,20 +58,6 @@ type FileTableProps = {
   viewMode: "list" | "icon" | "gallery";
   query: string;
 };
-
-async function onCopy(id: string) {
-  try {
-    const res = await api("/links/generate", {
-      method: "POST",
-      body: JSON.stringify({ fileId: id }),
-    });
-    const url = (res as any)?.url;
-    await navigator.clipboard.writeText(url);
-    toast.success("Copied link to clipboard");
-  } catch (e: any) {
-    toast.error("Copy failed", { description: e.message });
-  }
-}
 
 async function onDownload(id: string, name: string) {
   try {
@@ -114,6 +98,8 @@ async function onDelete(id: string) {
 export function FileTable({ viewMode, query }: Readonly<FileTableProps>) {
   const { data, isLoading } = useSWR<FileItem[]>("/files/", swrFetcher);
   const [selected, setSelected] = useState<FileItem | null>(null);
+  const [linkDialogOpen, setLinkDialogOpen] = useState(false);
+  const [linkFileId, setLinkFileId] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
     const q = query.toLowerCase();
@@ -178,7 +164,10 @@ export function FileTable({ viewMode, query }: Readonly<FileTableProps>) {
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => onCopy(f.id)}
+                      onClick={() => {
+                        setLinkFileId(f.id);
+                        setLinkDialogOpen(true);
+                      }}
                     >
                       <RiLinkM />
                     </Button>
@@ -202,6 +191,13 @@ export function FileTable({ viewMode, query }: Readonly<FileTableProps>) {
             </TableBody>
           </Table>
         </div>
+        {linkFileId && (
+          <LinkFormDialog
+            open={linkDialogOpen}
+            onOpenChange={setLinkDialogOpen}
+            fileId={linkFileId}
+          />
+        )}
         {selected && (
           <FilePreviewDialog
             open={!!selected}
@@ -217,32 +213,36 @@ export function FileTable({ viewMode, query }: Readonly<FileTableProps>) {
   if (viewMode === "icon") {
     return (
       <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-6">
-      {filtered.map((f) => (
-        <div
-          key={f.id}
-          className="relative flex flex-col items-center justify-center p-4 border rounded-xl shadow-sm"
-        >
-          {/* Show file preview icon or default icon */}
-          <div className="w-16 h-16 mb-3">
-            <img
-              src={getThumbnailUrl(f)}
-              alt={f.name}
-              className="object-cover w-full h-full rounded-lg"
+        {filtered.map((f) => (
+          <div
+            key={f.id}
+            className="relative flex flex-col items-center justify-center p-4 border rounded-xl shadow-sm"
+          >
+            {/* Show file preview icon or default icon */}
+            <div className="w-16 h-16 mb-3">
+              <img
+                src={getThumbnailUrl(f)}
+                alt={f.name}
+                className="object-cover w-full h-full rounded-lg"
+              />
+            </div>
+            <p className="text-sm font-medium">
+              {f.name.length > 12
+                ? `${f.name.slice(0, 12)}...${f.name.slice(
+                    f.name.lastIndexOf(".")
+                  )}`
+                : f.name}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {formatBytes(f.size)}
+            </p>
+            <RiDeleteBin6Fill
+              onClick={() => onDelete(f.id)}
+              className="absolute top-2 right-2 cursor-pointer text-muted-foreground hover:text-red-500"
             />
           </div>
-          <p className="text-sm font-medium">
-            {f.name.length > 12
-              ? `${f.name.slice(0, 12)}...${f.name.slice(
-                  f.name.lastIndexOf(".")
-                )}`
-              : f.name}
-          </p>
-          <p className="text-xs text-muted-foreground">{formatBytes(f.size)}</p>
-          <RiDeleteBin6Fill onClick={() => onDelete(f.id)} 
-          className="absolute top-2 right-2 cursor-pointer text-muted-foreground hover:text-red-500" />
-        </div>
-      ))}
-    </div>
+        ))}
+      </div>
     );
   }
 
@@ -261,7 +261,10 @@ export function FileTable({ viewMode, query }: Readonly<FileTableProps>) {
             <Button
               size="sm"
               variant="outline"
-              onClick={() => onCopy(mainFile.id)}
+              onClick={() => {
+                setLinkFileId(mainFile.id);
+                setLinkDialogOpen(true);
+              }}
             >
               <RiLinkM />
             </Button>

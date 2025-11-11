@@ -47,6 +47,11 @@ public class FileController {
         return ResponseEntity.ok(fileService.completeUpload(req.objectKey(), userHeader));
     }
 
+    @GetMapping({ "", "/" })
+    public ResponseEntity<List<FileResponseDto>> listFiles(@RequestHeader("X-User") String userHeader) {
+        return ResponseEntity.ok(fileService.listFiles(userHeader));
+    }
+
     @GetMapping("/download/{fileId}")
     public ResponseEntity<byte[]> download(@PathVariable UUID fileId) {
         byte[] data = fileService.downloadFile(fileId);
@@ -56,13 +61,8 @@ public class FileController {
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
-                .header(HttpHeaders.CONTENT_TYPE, "application/octet-stream") 
+                .header(HttpHeaders.CONTENT_TYPE, "application/octet-stream")
                 .body(data);
-    }
-
-    @GetMapping({ "", "/" })
-    public ResponseEntity<List<FileResponseDto>> listFiles(@RequestHeader("X-User") String userHeader) {
-        return ResponseEntity.ok(fileService.listFiles(userHeader));
     }
 
     @DeleteMapping("/{fileId}")
