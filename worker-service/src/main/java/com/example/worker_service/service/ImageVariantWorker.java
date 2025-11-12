@@ -1,6 +1,7 @@
 package com.example.worker_service.service;
 
 import java.awt.image.BufferedImage;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -41,7 +42,7 @@ public class ImageVariantWorker implements MessageListener {
             FileJob job = objectMapper.readValue(message.getBody(), FileJob.class);
             log.info("Received job for object: {}", job.getObjectKey());
             processJob(job);
-        } catch (Exception e) {
+        } catch (IOException e) {
             log.error("Failed to process Redis message: {}", e.getMessage(), e);
         }
     }

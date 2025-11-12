@@ -1,5 +1,6 @@
 package com.example.worker_service.service;
 
+import com.example.worker_service.exception.ConversionFailedException;
 import com.example.worker_service.model.dto.FileJob;
 import com.example.worker_service.model.dto.FileUpdateRequest;
 import com.example.worker_service.model.dto.FileVariantDto;
@@ -39,7 +40,7 @@ public class DocPreviewWorker implements MessageListener {
             FileJob job = objectMapper.readValue(message.getBody(), FileJob.class);
             log.info("Received preview job for fileId: {} ({})", job.getFileId(), job.getObjectKey());
             processJob(job);
-        } catch (Exception e) {
+        } catch (IOException e) {
             log.error("Failed to process message: {}", e.getMessage(), e);
         }
     }
@@ -115,7 +116,7 @@ public class DocPreviewWorker implements MessageListener {
             try (BufferedReader br = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
                 br.lines().forEach(log::error);
             }
-            throw new RuntimeException("LibreOffice conversion failed with exit code " + exitCode);
+            throw new ConversionFailedException("LibreOffice conversion failed with exit code " + exitCode);
         }
     }
 }

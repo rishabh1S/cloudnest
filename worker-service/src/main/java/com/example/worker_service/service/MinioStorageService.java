@@ -55,7 +55,7 @@ public class MinioStorageService {
     /** Get size of variant */
     public long getSize(String objectKey, String variantKey) {
         try {
-            String minioPath = "original".equals(variantKey) ? objectKey : "variants/" + variantKey + "/" + objectKey;
+            String minioPath = "original".equals(variantKey) ? objectKey : String.format("variants/%s/%s", variantKey, objectKey);
             return minioClient.statObject(
                     StatObjectArgs.builder().bucket(bucket).object(minioPath).build()).size();
         } catch (Exception e) {

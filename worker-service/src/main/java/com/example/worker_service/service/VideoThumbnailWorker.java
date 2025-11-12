@@ -2,6 +2,7 @@ package com.example.worker_service.service;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.util.ArrayList;
@@ -44,7 +45,7 @@ public class VideoThumbnailWorker implements MessageListener {
             FileJob job = objectMapper.readValue(message.getBody(), FileJob.class);
             log.info("Received video job for object: {}", job.getObjectKey());
             processVideo(job);
-        } catch (Exception e) {
+        } catch (IOException e) {
             log.error("Failed to process video message: {}", e.getMessage(), e);
         }
     }
