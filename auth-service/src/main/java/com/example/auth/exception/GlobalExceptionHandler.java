@@ -35,6 +35,21 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.UNAUTHORIZED, ex.getMessage());
     }
 
+    @ExceptionHandler(MissingAuthorizationHeaderException.class)
+    public ResponseEntity<Object> handleMissingAuthHeader(MissingAuthorizationHeaderException ex) {
+        return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
+    @ExceptionHandler(InvalidTokenException.class)
+    public ResponseEntity<Object> handleInvalidToken(InvalidTokenException ex) {
+        return buildResponse(HttpStatus.UNAUTHORIZED, ex.getMessage());
+    }
+
+    @ExceptionHandler(EmailSendFailedException.class)
+    public ResponseEntity<Object> handleEmailFailure(EmailSendFailedException ex) {
+        return buildResponse(HttpStatus.SERVICE_UNAVAILABLE, ex.getMessage());
+    }
+
     // Catch-all for other exceptions
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Object> handleOtherExceptions(Exception ex) {

@@ -9,7 +9,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.example.auth.config.JwtUtil;
+import com.example.auth.exception.EmailSendFailedException;
 import com.example.auth.exception.InvalidCredentialsException;
+import com.example.auth.exception.InvalidTokenException;
+import com.example.auth.exception.MissingAuthorizationHeaderException;
 import com.example.auth.exception.UserAlreadyExistsException;
 import com.example.auth.exception.UserNotFoundException;
 import com.example.auth.model.dto.AuthResponse;
@@ -20,6 +23,7 @@ import com.example.auth.model.entity.PasswordResetToken;
 import com.example.auth.model.entity.User;
 import com.example.auth.repository.PasswordResetTokenRepository;
 import com.example.auth.repository.UserRepository;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.RequiredArgsConstructor;
@@ -36,7 +40,7 @@ public class AuthService {
     private final PasswordResetTokenRepository resetTokenRepository;
 
     @Value("${frontend.origin}")
-    private String FRONTEND_ORIGIN;
+    private String frontendOrigin;
 
     public AuthResponse signup(SignupRequest signupRequest) {
         log.info("Signing up user: {}", signupRequest.getEmail());
@@ -73,29 +77,15 @@ public class AuthService {
         return response;
     }
 
-    public boolean verifyToken(String authHeader) {
-        log.info("Verifying token: {}", authHeader);
-        if (authHeader == null || !authHeader.startsWith("Bearer "))
-            return false;
-        String token = authHeader.substring(7);
-        try {
-            jwtUtil.isTokenValid(token);
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
     public String verifyAndExtractUser(String authHeader) {
-        log.info("Verifying token: {}", authHeader);
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            throw new RuntimeException("Missing or invalid Authorization header");
+            throw new MissingAuthorizationHeaderException("Missing or invalid Authorization header");
         }
 
         String token = authHeader.substring(7);
         try {
             if (!jwtUtil.isTokenValid(token)) {
-                throw new RuntimeException("Invalid token");
+                throw new InvalidTokenException("Invalid or expired token");
             }
 
             UUID id = jwtUtil.extractUserId(token);
@@ -106,9 +96,9 @@ public class AuthService {
 
             ObjectMapper mapper = new ObjectMapper();
             return mapper.writeValueAsString(user); // serialize to JSON
-        } catch (Exception e) {
+        } catch (JsonProcessingException | RuntimeException e) {
             log.error("Token verification failed", e);
-            throw new RuntimeException("Token verification failed");
+            throw new InvalidTokenException("Token verification failed");
         }
     }
 
@@ -126,7 +116,7 @@ public class AuthService {
 
         resetTokenRepository.save(resetToken);
 
-        String resetLink = FRONTEND_ORIGIN + "/reset-password?token=" + token;
+        String resetLink = frontendOrigin + "/reset-password?token=" + token;
 
         String mailSubject = "Password Reset Request - CloudNest Account";
 
@@ -148,10 +138,10 @@ public class AuthService {
 
         try {
             emailService.sendEmail(user.getEmail(), mailSubject, mailContent);
-            log.info("✅ Email sent successfully to {}", user.getEmail());
+            log.info("Email sent successfully to {}", user.getEmail());
         } catch (Exception e) {
-            log.error("❌ Failed to send email to {}: {}", user.getEmail(), e.getMessage(), e);
-            throw new RuntimeException("Email sending failed: " + e.getMessage());
+            log.error("Failed to send email to {}: {}", user.getEmail(), e.getMessage(), e);
+            throw new EmailSendFailedException("Failed to send password reset email. Please try again later.");
         }
 
     }

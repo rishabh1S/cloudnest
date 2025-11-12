@@ -52,7 +52,7 @@ public class PdfPreviewWorker implements MessageListener {
              PDDocument document = PDDocument.load(input)) {
 
             PDFRenderer renderer = new PDFRenderer(document);
-            BufferedImage firstPage = renderer.renderImageWithDPI(0, 150); // Render first page at 150 DPI
+            BufferedImage firstPage = renderer.renderImageWithDPI(0, 150);
 
             variants = variantUtils.generateImageVariants(job.getObjectKey(), firstPage);
 
