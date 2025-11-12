@@ -12,9 +12,9 @@ import com.example.auth.config.JwtUtil;
 import com.example.auth.exception.InvalidCredentialsException;
 import com.example.auth.exception.UserAlreadyExistsException;
 import com.example.auth.exception.UserNotFoundException;
+import com.example.auth.model.dto.AuthResponse;
 import com.example.auth.model.dto.AuthenticatedUser;
 import com.example.auth.model.dto.LoginRequest;
-import com.example.auth.model.dto.LoginResponse;
 import com.example.auth.model.dto.SignupRequest;
 import com.example.auth.model.entity.PasswordResetToken;
 import com.example.auth.model.entity.User;
@@ -38,7 +38,7 @@ public class AuthService {
     @Value("${frontend.origin}")
     private String FRONTEND_ORIGIN;
 
-    public User signup(SignupRequest signupRequest) {
+    public AuthResponse signup(SignupRequest signupRequest) {
         log.info("Signing up user: {}", signupRequest.getEmail());
         if (userRepository.findByEmail(signupRequest.getEmail()).isPresent()) {
             throw new UserAlreadyExistsException("User with email " + signupRequest.getEmail() + " already exists");
@@ -49,19 +49,27 @@ public class AuthService {
         user.setEmail(signupRequest.getEmail());
         user.setPassword(passwordEncoder.encode(signupRequest.getPassword()));
 
-        return userRepository.save(user);
+        userRepository.save(user);
+        AuthenticatedUser authUser = new AuthenticatedUser(user.getId(), user.getName(), user.getEmail());
+        String token = jwtUtil.generateToken(user);
+        AuthResponse response = new AuthResponse();
+        response.setToken(token);
+        response.setUser(authUser);
+        return response;
     }
 
-    public LoginResponse login(LoginRequest loginRequest) {
+    public AuthResponse login(LoginRequest loginRequest) {
         log.info("Logging in user: {}", loginRequest.getEmail());
         User user = userRepository.findByEmail(loginRequest.getEmail())
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
         if (!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
             throw new InvalidCredentialsException("Invalid password");
         }
+        AuthenticatedUser authUser = new AuthenticatedUser(user.getId(), user.getName(), user.getEmail());
         String token = jwtUtil.generateToken(user);
-        LoginResponse response = new LoginResponse();
+        AuthResponse response = new AuthResponse();
         response.setToken(token);
+        response.setUser(authUser);
         return response;
     }
 

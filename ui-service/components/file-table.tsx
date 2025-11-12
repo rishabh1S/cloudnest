@@ -311,7 +311,13 @@ export function FileTable({ viewMode, query }: Readonly<FileTableProps>) {
         ))}
       </div>
 
-      {/* Optional Preview Dialog */}
+      {linkFileId && (
+        <LinkFormDialog
+          open={linkDialogOpen}
+          onOpenChange={setLinkDialogOpen}
+          fileId={linkFileId}
+        />
+      )}
       {selected && (
         <FilePreviewDialog
           open={!!selected}

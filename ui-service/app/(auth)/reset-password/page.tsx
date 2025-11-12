@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
 import { PasswordInput } from "@/components/ui/password-input";
+import { Input } from "@/components/ui/input";
 
 export default function ResetPasswordPage() {
   const router = useRouter();
@@ -31,13 +32,12 @@ export default function ResetPasswordPage() {
     }
     setIsLoading(true);
     try {
-      const message = await api(`/auth/reset-password?token=${token}`, {
+      const data = await api(`/auth/reset-password?token=${token}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ newPassword: password }),
       });
-
-      toast.success(message);
+      toast.success(data.message);
       router.push("/login");
     } catch (err: any) {
       toast.error(err.message || "Something went wrong!");
@@ -72,15 +72,22 @@ export default function ResetPasswordPage() {
               required
               className="glass"
             />
-            <PasswordInput
+            <div className="space-y-2">
+            <label
+              htmlFor={confirm}
+              className="text-sm font-medium text-foreground"
+            >
+              Confirm password
+            </label>
+            <Input
               id="confirm"
-              label="Confirm Password"
               placeholder="••••••••"
               value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
               required
               className="glass"
             />
+            </div>
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? "Resetting..." : "Reset Password"}
             </Button>

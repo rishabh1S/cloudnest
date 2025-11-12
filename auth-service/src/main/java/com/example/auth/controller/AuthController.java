@@ -9,12 +9,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.auth.model.dto.ApiResponse;
+import com.example.auth.model.dto.AuthResponse;
 import com.example.auth.model.dto.ForgotPasswordRequest;
 import com.example.auth.model.dto.LoginRequest;
-import com.example.auth.model.dto.LoginResponse;
 import com.example.auth.model.dto.PasswordResetRequest;
 import com.example.auth.model.dto.SignupRequest;
-import com.example.auth.model.entity.User;
 import com.example.auth.service.AuthService;
 
 import lombok.RequiredArgsConstructor;
@@ -26,29 +26,37 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/register")
-    public ResponseEntity<User> signup(@RequestBody SignupRequest request) {
-        return ResponseEntity.ok(authService.signup(request));
+    public ResponseEntity<AuthResponse> signup(@RequestBody SignupRequest request) {
+        return ResponseEntity.status(201).body(authService.signup(request));
     }
 
     @PostMapping("/login")
-    public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest request) {
+    public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest request) {
         return ResponseEntity.ok(authService.login(request));
     }
 
     @PostMapping("/forgot-password")
-    public ResponseEntity<String> requestPasswordReset(@RequestBody ForgotPasswordRequest request) {
+    public ResponseEntity<ApiResponse> requestPasswordReset(@RequestBody ForgotPasswordRequest request) {
         authService.requestPasswordReset(request.email());
-        return ResponseEntity.ok("If the email exists, a reset link has been sent.");
+        return ResponseEntity.ok(ApiResponse.builder()
+                .message("If the email exists, a reset link has been sent.")
+                .statusCode(200)
+                .build());
     }
 
     @PostMapping("/reset-password")
-    public ResponseEntity<String> resetPassword(@RequestBody PasswordResetRequest request, @RequestParam("token") String token) {
+    public ResponseEntity<ApiResponse> resetPassword(@RequestBody PasswordResetRequest request,
+            @RequestParam String token) {
         authService.resetPassword(token, request.newPassword());
-        return ResponseEntity.ok("Password successfully reset");
+        return ResponseEntity.ok(ApiResponse.builder()
+                .message("Password reset is successful.")
+                .statusCode(200)
+                .build());
     }
 
     @GetMapping("/verify")
-    public ResponseEntity<Void> verifyToken(@RequestHeader(value = "Authorization", required = false) String authHeader) {
+    public ResponseEntity<Void> verifyToken(
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
         try {
             String userJson = authService.verifyAndExtractUser(authHeader);
 

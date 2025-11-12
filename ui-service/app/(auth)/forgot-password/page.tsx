@@ -17,12 +17,12 @@ export default function ForgotPasswordPage() {
     e.preventDefault();
     setIsLoading(true);
     try {
-      const message = await api("/auth/forgot-password", {
+      const data = await api("/auth/forgot-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
       });
-      toast.success(message);
+      toast.success(data.message);
     } catch (err: any) {
       toast.error(err.message || "Something went wrong!");
     } finally {
