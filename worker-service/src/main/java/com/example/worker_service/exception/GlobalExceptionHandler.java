@@ -20,17 +20,17 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(body, status);
     }
 
-    @ExceptionHandler(Exception.class)
+    @ExceptionHandler(StorageException.class)
     public ResponseEntity<Object> handleStorage(StorageException ex){
         return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage());
     }
 
-    @ExceptionHandler(Exception.class)
+    @ExceptionHandler(ImageProcessingException.class)
     public ResponseEntity<Object> handleImageProcessing(ImageProcessingException ex){
         return buildResponse(HttpStatus.UNPROCESSABLE_ENTITY, ex.getMessage());
     }
 
-    @ExceptionHandler(Exception.class)
+    @ExceptionHandler(ConversionFailedException.class)
     public ResponseEntity<Object> handleStorage(ConversionFailedException ex){
         return buildResponse(HttpStatus.UNPROCESSABLE_ENTITY, ex.getMessage());
     }
