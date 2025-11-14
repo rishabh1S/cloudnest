@@ -1,50 +1,31 @@
 "use client";
 
-import React, { useState } from "react";
-import { notFound, useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { format } from "date-fns";
-import { FilePreviewDialog } from "@/components/file-preview-dialog";
-import { swrFetcher } from "@/lib/api";
-import { Loader2, Eye, ArrowLeft } from "lucide-react";
-import { FileActions } from "@/components/file-actions";
+import { FileActions } from "@/components/files/file-actions";
+import { formatBytes } from "@/components/files/file-list";
+import { FilePreviewDialog } from "@/components/files/file-preview-dialog";
 import { LinkFormDialog } from "@/components/link-form-dialog";
+import { Button } from "@/components/ui/button";
+import { swrFetcher } from "@/lib/api";
+import { FileItem } from "@/lib/store";
+import { format } from "date-fns";
+import { ArrowLeft, Eye, Loader2 } from "lucide-react";
+import { notFound, useRouter } from "next/navigation";
+import { useState } from "react";
+import { LuFile, LuFileArchive, LuFileMusic } from "react-icons/lu";
 import useSWR from "swr";
 
-type ShareInfo = {
-  id: string;
-  url: string;
-  expiresAt: string | null;
-  hasPassword: boolean;
-} | null;
-
-type FileItem = {
-  id: string;
-  name: string;
-  type: string;
-  size: number;
-  createdAt: string;
-  updatedAt: string;
-  variants: Record<string, string>;
-  share: ShareInfo;
+type FileCenterProps = {
+  f: FileItem;
+  previewSrc?: string;
 };
-
-function formatBytes(bytes: number) {
-  if (bytes === 0) return "0 B";
-  const k = 1024;
-  const sizes = ["B", "KB", "MB", "GB", "TB"];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return `${Number.parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${
-    sizes[i]
-  }`;
-}
 
 export default function FileDetailPage({ params }: { params: { id: string } }) {
   const router = useRouter();
-  const { data: file, isLoading, mutate } = useSWR<FileItem>(
-    `/files/${params.id}`,
-    swrFetcher
-  );
+  const {
+    data: file,
+    isLoading,
+    mutate,
+  } = useSWR<FileItem>(`/files/${params.id}`, swrFetcher);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [linkDialogOpen, setLinkDialogOpen] = useState(false);
   const [linkFileId, setLinkFileId] = useState<string | null>(null);
@@ -57,7 +38,7 @@ export default function FileDetailPage({ params }: { params: { id: string } }) {
     );
 
   if (!file) return notFound();
-  const previewSrc = file.variants?.medium;
+  const previewSrc = file.variants?.medium || file.variants?.original;
 
   const metadata = [
     { label: "File Name", value: file.name },
@@ -98,16 +79,13 @@ export default function FileDetailPage({ params }: { params: { id: string } }) {
             className="relative w-full h-full flex items-center justify-center cursor-pointer group"
             onClick={() => setPreviewOpen(true)}
           >
-            <img
-              src={previewSrc}
-              alt={file.name}
-              className="rounded-xl max-w-full max-h-[calc(100vh-200px)] object-contain shadow-2xl transition-transform group-hover:scale-[1.02]"
-            />
-
-            <div className="absolute bottom-6 right-6 bg-black/70 text-white text-sm px-4 py-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2">
-              <Eye className="h-4 w-4" />
-              Click to enlarge
-            </div>
+            <FileCenter f={file} previewSrc={previewSrc} />
+            {file.type.startsWith("image/") && (
+              <div className="absolute bottom-6 right-6 bg-black/70 text-white text-sm px-4 py-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2">
+                <Eye className="h-4 w-4" />
+                Click to enlarge
+              </div>
+            )}
           </div>
         </div>
 
@@ -163,3 +141,28 @@ export default function FileDetailPage({ params }: { params: { id: string } }) {
     </div>
   );
 }
+
+const FileCenter: React.FC<FileCenterProps> = ({ f, previewSrc }) => {
+  let content;
+
+  if (f.type.startsWith("image/") && previewSrc) {
+    content = (
+      <img
+        src={previewSrc}
+        alt={f.name}
+        className="rounded-xl max-w-full max-h-[calc(100vh-200px)] object-contain shadow-2xl transition-transform group-hover:scale-[1.02]"
+      />
+    );
+  } else if (f.type.startsWith("audio/")) {
+    content = <LuFileMusic className="h-24 w-24 text-green-500" />;
+  } else if (
+    f.type === "application/zip" ||
+    f.type === "application/x-zip-compressed"
+  ) {
+    content = <LuFileArchive className="h-24 w-24 text-orange-500" />;
+  } else {
+    content = <LuFile className="h-24 w-24 text-gray-400" />;
+  }
+
+  return <>{content}</>;
+};

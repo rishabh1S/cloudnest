@@ -35,12 +35,13 @@ export function FilePreviewDialog({
     file.type ===
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
   const isText = file.type === "text/plain";
+  const isAudio = file.type.startsWith("audio/");
   const isVideo = file.type.startsWith("video/");
 
   const src = file.variants?.original;
   // Generate Office viewer URL for docs, ppt, excel
   const officeViewerUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(
-    src || "",
+    src || ""
   )}`;
 
   const renderImagePreview = () => (
@@ -61,6 +62,12 @@ export function FilePreviewDialog({
         <source src={src} type={file.type} />
         Your browser does not support the video tag.
       </video>
+    </div>
+  );
+
+  const renderAudioPreview = () => (
+    <div className="relative w-full max-h-[70vh]">
+      <audio src={src} controls className="w-full" />
     </div>
   );
 
@@ -112,6 +119,7 @@ export function FilePreviewDialog({
   const renderPreview = () => {
     if (isImage) return renderImagePreview();
     if (isVideo) return renderVideoPreview();
+    if (isAudio) return renderAudioPreview();
     if (isPdf) return renderPdfPreview();
     if (isWord || isPpt || isExcel) return renderOfficePreview();
     if (isText) return renderTextPreview();

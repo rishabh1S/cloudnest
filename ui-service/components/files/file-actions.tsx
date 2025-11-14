@@ -18,11 +18,12 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { useRouter } from "next/navigation";
 
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL;
 
-async function onDownload(id: string, name: string) {
+export async function onDownload(id: string, name: string) {
   try {
     const token = getToken();
     const res = await fetch(`${API_BASE}/files/download/${id}`, {
@@ -47,7 +48,7 @@ async function onDownload(id: string, name: string) {
   }
 }
 
-async function onDelete(id: string) {
+export async function onDelete(id: string) {
   try {
     await api(`/files/${id}`, { method: "DELETE" });
     mutate("/files/");
@@ -66,6 +67,7 @@ export function FileActions({
   onPreview: () => void;
   onShare: () => void;
 }>) {
+  const router = useRouter();
   return (
     <div>
       <h2 className="text-lg font-semibold mb-4">Actions</h2>
@@ -125,7 +127,10 @@ export function FileActions({
 
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={() => onDelete(file.id)}>
+              <AlertDialogAction onClick={() => {
+                onDelete(file.id);
+                router.replace("/files");
+                }}>
                 Delete
               </AlertDialogAction>
             </AlertDialogFooter>

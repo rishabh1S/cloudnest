@@ -133,6 +133,14 @@ public class FileService {
         } else {
             meta.setFileStatus(FileStatus.COMPLETED.name());
             fileMetadataRepository.save(meta);
+
+            FileVariant original = new FileVariant();
+            original.setFile(meta);
+            original.setVariantKey("original");
+            original.setUrl(meta.getUrl());
+            original.setTransform(Map.of());
+            original.setSizeBytes(meta.getSize());
+            fileVariantRepository.save(original);
         }
 
         return new FileResponseDto(meta.getId(), meta.getFilename(), meta.getMimeType(),

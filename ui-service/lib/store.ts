@@ -5,15 +5,23 @@ export type User = {
   passwordHash: string
 }
 
+type ShareInfo = {
+  id: string;
+  url: string;
+  expiresAt: string | null;
+  hasPassword: boolean;
+} | null;
+
 export type FileItem = {
-  id: string
-  ownerId: string
-  name: string
-  type: string
-  size: number
-  createdAt: string
-  previewUrl?: string
-}
+  id: string;
+  name: string;
+  type: string;
+  size: number;
+  createdAt: string;
+  updatedAt: string;
+  variants: Record<string, string>;
+  share: ShareInfo;
+};
 
 const users = new Map<string, User>()
 const usersByEmail = new Map<string, User>()
@@ -53,21 +61,6 @@ export function validateUser(email: string, password: string): User | undefined 
 
 export function listFiles(ownerId: string): FileItem[] {
   return [...(filesByUser.get(ownerId) || [])].sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt))
-}
-
-export function addFile(ownerId: string, file: Omit<FileItem, "id" | "createdAt" | "ownerId">): FileItem {
-  const f: FileItem = {
-    id: uid("file"),
-    ownerId,
-    name: file.name,
-    type: file.type,
-    size: file.size,
-    previewUrl: file.previewUrl,
-    createdAt: new Date().toISOString(),
-  }
-  const current = filesByUser.get(ownerId) || []
-  filesByUser.set(ownerId, [f, ...current])
-  return f
 }
 
 export function deleteFile(ownerId: string, fileId: string): boolean {
