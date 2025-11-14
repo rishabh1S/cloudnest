@@ -10,5 +10,7 @@ public record FileResponseDto(
     String type,
     long size,
     Instant createdAt,
-    Map<String, String> variants
+    Instant updatedAt,
+    Map<String, String> variants,
+    ShareLinkDto share
 ) {}

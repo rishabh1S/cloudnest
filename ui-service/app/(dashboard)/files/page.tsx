@@ -16,12 +16,12 @@ import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
 export default function FilesPage() {
-  const [viewMode, setViewMode] = useState<"list" | "icon" | "gallery">(
+  const [viewMode, setViewMode] = useState<"list" | "grid" | "gallery">(
     "list"
   );
   const [query, setQuery] = useState("");
 
-  const handleViewChange = (view: "list" | "icon" | "gallery") => {
+  const handleViewChange = (view: "list" | "grid" | "gallery") => {
     setViewMode(view);
   };
 
@@ -52,13 +52,13 @@ export default function FilesPage() {
                   List View
                 </div>
               </SelectItem>
-              <SelectItem value="icon">
+              <SelectItem value="grid">
                 <div className="flex items-center gap-2">
                   <LuLayoutGrid className="w-4 h-4" />
-                  Icon View
+                  Grid View
                 </div>
               </SelectItem>
-              <SelectItem value="big-icon">
+              <SelectItem value="gallery">
                 <div className="flex items-center gap-2">
                   <LuImage className="w-4 h-4" />
                   Gallery View

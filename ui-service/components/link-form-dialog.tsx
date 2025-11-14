@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -13,62 +13,96 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
-import { Copy, Link as LinkIcon } from "lucide-react";
 import {
-  Select,
-  SelectTrigger,
-  SelectContent,
-  SelectItem,
-  SelectValue,
-} from "@/components/ui/select";
+  Copy,
+  LinkIcon,
+  Trash2,
+} from "lucide-react";
 
 export function LinkFormDialog({
   open,
   onOpenChange,
   fileId,
+  existingLink,
+  onLinkDeleted,
+  onLinkGenerated,
 }: Readonly<{
   open: boolean;
   onOpenChange: (v: boolean) => void;
   fileId: string;
+  existingLink?: {
+    id: string;
+    url: string;
+    expiresAt: string | null;
+    hasPassword: boolean;
+  } | null;
+  onLinkDeleted?: () => void;
+  onLinkGenerated?: () => void;
 }>) {
   const [passwordEnabled, setPasswordEnabled] = useState(false);
   const [password, setPassword] = useState("");
+
   const [expiresEnabled, setExpiresEnabled] = useState(false);
-  const [expiryValue, setExpiryValue] = useState<number>(10); // default 10
-  const [expiryUnit, setExpiryUnit] = useState<"minutes" | "hours" | "days">(
-    "minutes"
-  );
+  const [expiryDays, setExpiryDays] = useState(0);
+  const [expiryHours, setExpiryHours] = useState(0);
+  const [expiryMinutes, setExpiryMinutes] = useState(30);
+
+  const [calculatedExpiry, setCalculatedExpiry] = useState<Date | null>(null);
+
   const [loading, setLoading] = useState(false);
-  const [generatedUrl, setGeneratedUrl] = useState<string | null>(null);
+  const [generatedUrl, setGeneratedUrl] = useState(null);
+
+  const activeUrl = existingLink?.url ?? generatedUrl;
+
+  useEffect(() => {
+    if (!expiresEnabled) return setCalculatedExpiry(null);
+
+    const totalMs =
+      expiryDays * 86400000 +
+      expiryHours * 3600000 +
+      expiryMinutes * 60000;
+
+    if (totalMs <= 0) return setCalculatedExpiry(null);
+
+    setCalculatedExpiry(new Date(Date.now() + totalMs));
+  }, [expiresEnabled, expiryDays, expiryHours, expiryMinutes]);
+
+  const setPreset = (ms: number) => {
+    setExpiresEnabled(true);
+    setExpiryDays(Math.floor(ms / 86400000));
+    setExpiryHours(Math.floor((ms % 86400000) / 3600000));
+    setExpiryMinutes(Math.floor((ms % 3600000) / 60000));
+  };
 
   async function handleGenerate() {
     try {
       setLoading(true);
 
-      let expiresAt: string | null = null;
+      let expiresAt = null;
+
       if (expiresEnabled) {
-        let totalMinutes = expiryValue;
-        if (expiryUnit === "hours") totalMinutes = expiryValue * 60;
-        if (expiryUnit === "days") totalMinutes = expiryValue * 24 * 60;
+        const totalMs =
+          expiryDays * 86400000 +
+          expiryHours * 3600000 +
+          expiryMinutes * 60000;
 
-        const expiryDate = new Date(Date.now() + totalMinutes * 60 * 1000);
-        expiresAt = expiryDate.toISOString();
+        expiresAt = new Date(Date.now() + totalMs).toISOString();
       }
-
-      const body = {
-        fileId,
-        password: passwordEnabled && password ? password : null,
-        expiresAt,
-      };
 
       const res = await api("/links/generate", {
         method: "POST",
-        body: JSON.stringify(body),
+        body: JSON.stringify({
+          fileId,
+          password: passwordEnabled ? password : null,
+          expiresAt,
+        }),
       });
 
       setGeneratedUrl(res.url);
-      await navigator.clipboard.writeText(res.url);
-      toast.success("Shareable link generated and copied!");
+      onLinkGenerated?.();
+      navigator.clipboard.writeText(res.url);
+
+      toast.success("Share link generated & copied");
     } catch (e: any) {
       toast.error("Failed to generate link", { description: e.message });
     } finally {
@@ -76,12 +110,24 @@ export function LinkFormDialog({
     }
   }
 
+  async function handleDeleteLink() {
+    try {
+      await api(`/links/delete/${existingLink?.id}`, { method: "DELETE" });
+      onLinkDeleted?.();
+      toast.success("Link deleted");
+      onOpenChange(false);
+    } catch {
+      toast.error("Failed to delete link");
+    }
+  }
+
   function resetForm() {
     setPasswordEnabled(false);
     setPassword("");
     setExpiresEnabled(false);
-    setExpiryValue(10);
-    setExpiryUnit("minutes");
+    setExpiryDays(0);
+    setExpiryHours(0);
+    setExpiryMinutes(30);
     setGeneratedUrl(null);
   }
 
@@ -93,102 +139,183 @@ export function LinkFormDialog({
         if (!v) resetForm();
       }}
     >
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Generate Shareable Link</DialogTitle>
+      <DialogContent className="sm:max-w-lg p-0">
+        <DialogHeader className="px-6 pb-2 pt-6 border-b">
+          <DialogTitle className="text-xl font-semibold tracking-tight">
+            {existingLink ? "Active Share Link" : "Generate Share Link"}
+          </DialogTitle>
         </DialogHeader>
+        <div className="p-6 space-y-8">
 
-        {generatedUrl ? (
-          <div className="space-y-4">
-            <div className="bg-muted p-3 rounded-md text-sm break-all">
-              {generatedUrl}
-            </div>
-
-            <div className="flex justify-end gap-2">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  navigator.clipboard.writeText(generatedUrl);
-                  toast.success("Copied to clipboard!");
-                }}
-              >
-                <Copy className="w-4 h-4 mr-1" /> Copy
-              </Button>
-              <Button
-                variant="default"
-                onClick={() => window.open(generatedUrl, "_blank")}
-              >
-                <LinkIcon className="w-4 h-4 mr-1" /> Open Link
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-6">
-            {/* Password Section */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label>Password Protection</Label>
-                <Switch
-                  checked={passwordEnabled}
-                  onCheckedChange={setPasswordEnabled}
-                />
+          {activeUrl ? (
+            <div className="space-y-6">
+              <div className="rounded-md border bg-muted/40 p-4">
+                <div className="text-sm font-medium break-all">{activeUrl}</div>
               </div>
-              {passwordEnabled && (
-                <Input
-                  type="text"
-                  placeholder="Enter password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-              )}
-            </div>
+              <div className="space-y-1 text-sm text-muted-foreground">
+                {existingLink?.expiresAt && (
+                  <p>
+                    Expires on:{" "}
+                    <span className="font-medium text-foreground">
+                      {new Date(existingLink.expiresAt).toLocaleString()}
+                    </span>
+                  </p>
+                )}
 
-            {/* Expiry Section */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <Label>Set Expiry</Label>
-                <Switch
-                  checked={expiresEnabled}
-                  onCheckedChange={setExpiresEnabled}
-                />
+                {existingLink?.hasPassword && (
+                  <p className="text-yellow-600 font-medium">
+                    🔒 Password protected
+                  </p>
+                )}
               </div>
+              <div className="flex justify-end gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    navigator.clipboard.writeText(activeUrl);
+                    toast.success("Copied!");
+                  }}
+                  className="gap-2"
+                >
+                  <Copy className="h-4 w-4" /> Copy
+                </Button>
 
-              {expiresEnabled && (
-                <div className="flex justify-between items-center gap-4">
-                  <Input
-                    type="number"
-                    min={1}
-                    value={expiryValue}
-                    onChange={(e) => setExpiryValue(Number(e.target.value))}
-                  />
-                  <Select
-                    value={expiryUnit}
-                    onValueChange={(v) =>
-                      setExpiryUnit(v as "minutes" | "hours" | "days")
-                    }
+                <Button onClick={() => window.open(activeUrl, "_blank")} className="gap-2">
+                  <LinkIcon className="h-4 w-4" /> Open
+                </Button>
+              </div>
+              {existingLink && (
+                <div className="pt-4 border-t flex justify-end">
+                  <Button
+                    variant="destructive"
+                    onClick={handleDeleteLink}
+                    className="gap-2"
                   >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Unit" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="minutes">Minutes</SelectItem>
-                      <SelectItem value="hours">Hours</SelectItem>
-                      <SelectItem value="days">Days</SelectItem>
-                    </SelectContent>
-                  </Select>
+                    <Trash2 className="h-4 w-4" /> Delete Link
+                  </Button>
                 </div>
               )}
             </div>
+          ) : (
+            <div className="space-y-10">
+              <div className="border rounded-lg bg-muted/30 p-5 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-semibold tracking-wider text-muted-foreground">
+                      Password Protection
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Require a password before file can be accessed.
+                    </p>
+                  </div>
 
-            <Button
-              onClick={handleGenerate}
-              disabled={loading}
-              className="w-full"
-            >
-              {loading ? "Generating..." : "Generate Link"}
-            </Button>
-          </div>
-        )}
+                  <Switch
+                    checked={passwordEnabled}
+                    onCheckedChange={setPasswordEnabled}
+                  />
+                </div>
+
+                {passwordEnabled && (
+                  <Input
+                    placeholder="Enter password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
+                )}
+              </div>
+              <div className="border rounded-lg bg-muted/30 p-5 space-y-5">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-semibold tracking-wider text-muted-foreground">
+                      Expiry
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Automatically disable link after selected time.
+                    </p>
+                  </div>
+
+                  <Switch
+                    checked={expiresEnabled}
+                    onCheckedChange={setExpiresEnabled}
+                  />
+                </div>
+
+                {expiresEnabled && (
+                  <>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPreset(3600000)}
+                      >
+                        1 hour
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPreset(24 * 3600000)}
+                      >
+                        24 hours
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPreset(7 * 24 * 3600000)}
+                      >
+                        7 days
+                      </Button>
+                    </div>
+                    <div className="grid grid-cols-3 gap-4">
+                      <div>
+                        <Label className="text-xs">Days</Label>
+                        <Input
+                          type="number"
+                          min={0}
+                          value={expiryDays}
+                          onChange={(e) => setExpiryDays(Number(e.target.value))}
+                        />
+                      </div>
+
+                      <div>
+                        <Label className="text-xs">Hours</Label>
+                        <Input
+                          type="number"
+                          min={0}
+                          value={expiryHours}
+                          onChange={(e) => setExpiryHours(Number(e.target.value))}
+                        />
+                      </div>
+
+                      <div>
+                        <Label className="text-xs">Minutes</Label>
+                        <Input
+                          type="number"
+                          min={0}
+                          value={expiryMinutes}
+                          onChange={(e) =>
+                            setExpiryMinutes(Number(e.target.value))
+                          }
+                        />
+                      </div>
+                    </div>
+
+                    {calculatedExpiry && (
+                      <p className="text-xs text-muted-foreground pt-2">
+                        Link will be available until:{" "}
+                        <span className="font-medium text-foreground">
+                          {calculatedExpiry.toLocaleString()}
+                        </span>
+                      </p>
+                    )}
+                  </>
+                )}
+              </div>
+              <Button className="w-full py-5 text-base" disabled={loading} onClick={handleGenerate}>
+                {loading ? "Generating..." : "Generate Share Link"}
+              </Button>
+            </div>
+          )}
+        </div>
       </DialogContent>
     </Dialog>
   );

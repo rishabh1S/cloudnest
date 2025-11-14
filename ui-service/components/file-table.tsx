@@ -14,10 +14,10 @@ import {
 } from "@/components/ui/table";
 import { LuFileSearch } from "react-icons/lu";
 import { RiDeleteBin6Fill, RiDownloadLine, RiLinkM } from "react-icons/ri";
-import { FilePreviewDialog } from "./file-preview-dialog";
 import { toast } from "sonner";
 import { getToken } from "@/lib/auth";
 import { LinkFormDialog } from "./link-form-dialog";
+import { useRouter } from "next/navigation";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL;
 
@@ -55,7 +55,7 @@ function formatBytes(bytes: number) {
 }
 
 type FileTableProps = {
-  viewMode: "list" | "icon" | "gallery";
+  viewMode: "list" | "grid" | "gallery";
   query: string;
 };
 
@@ -97,7 +97,7 @@ async function onDelete(id: string) {
 
 export function FileTable({ viewMode, query }: Readonly<FileTableProps>) {
   const { data, isLoading } = useSWR<FileItem[]>("/files/", swrFetcher);
-  const [selected, setSelected] = useState<FileItem | null>(null);
+  const router = useRouter();
   const [linkDialogOpen, setLinkDialogOpen] = useState(false);
   const [linkFileId, setLinkFileId] = useState<string | null>(null);
 
@@ -152,14 +152,12 @@ export function FileTable({ viewMode, query }: Readonly<FileTableProps>) {
             <TableBody>
               {filtered.map((f) => (
                 <TableRow key={f.id} className="cursor-pointer">
-                  <TableCell onClick={() => setSelected(f)}>{f.name}</TableCell>
-                  <TableCell onClick={() => setSelected(f)}>{f.type}</TableCell>
-                  <TableCell onClick={() => setSelected(f)}>
-                    {formatBytes(f.size)}
-                  </TableCell>
-                  <TableCell onClick={() => setSelected(f)}>
-                    {new Date(f.createdAt).toLocaleString()}
-                  </TableCell>
+                    <TableCell onClick={() => router.push(`/files/${f.id}`)}>{f.name}</TableCell>
+                    <TableCell onClick={() => router.push(`/files/${f.id}`)}>{f.type}</TableCell>
+                    <TableCell onClick={() => router.push(`/files/${f.id}`)}>{formatBytes(f.size)}</TableCell>
+                    <TableCell onClick={() => router.push(`/files/${f.id}`)}>
+                      {new Date(f.createdAt).toLocaleString()}
+                    </TableCell>
                   <TableCell className="text-right space-x-2">
                     <Button
                       size="sm"
@@ -168,6 +166,7 @@ export function FileTable({ viewMode, query }: Readonly<FileTableProps>) {
                         setLinkFileId(f.id);
                         setLinkDialogOpen(true);
                       }}
+                      className="cursor-pointer"
                     >
                       <RiLinkM />
                     </Button>
@@ -175,6 +174,7 @@ export function FileTable({ viewMode, query }: Readonly<FileTableProps>) {
                       size="sm"
                       variant="default"
                       onClick={() => onDownload(f.id, f.name)}
+                      className="cursor-pointer"
                     >
                       <RiDownloadLine />
                     </Button>
@@ -182,6 +182,7 @@ export function FileTable({ viewMode, query }: Readonly<FileTableProps>) {
                       size="sm"
                       variant="destructive"
                       onClick={() => onDelete(f.id)}
+                      className="cursor-pointer"
                     >
                       <RiDeleteBin6Fill />
                     </Button>
@@ -198,27 +199,20 @@ export function FileTable({ viewMode, query }: Readonly<FileTableProps>) {
             fileId={linkFileId}
           />
         )}
-        {selected && (
-          <FilePreviewDialog
-            open={!!selected}
-            onOpenChange={(v) => !v && setSelected(null)}
-            file={selected}
-          />
-        )}
       </div>
     );
   }
 
-  // ------------------ ICON VIEW ------------------
-  if (viewMode === "icon") {
+  // ------------------ Grid VIEW ------------------
+  if (viewMode === "grid") {
     return (
       <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-6">
         {filtered.map((f) => (
           <div
             key={f.id}
-            className="relative flex flex-col items-center justify-center p-4 border rounded-xl shadow-sm"
+            className="flex flex-col items-center justify-center p-4 border rounded-xl shadow-sm cursor-pointer"
+            onClick={() => router.push(`/files/${f.id}`)}
           >
-            {/* Show file preview icon or default icon */}
             <div className="w-16 h-16 mb-3">
               <img
                 src={getThumbnailUrl(f)}
@@ -236,10 +230,6 @@ export function FileTable({ viewMode, query }: Readonly<FileTableProps>) {
             <p className="text-xs text-muted-foreground">
               {formatBytes(f.size)}
             </p>
-            <RiDeleteBin6Fill
-              onClick={() => onDelete(f.id)}
-              className="absolute top-2 right-2 cursor-pointer text-muted-foreground hover:text-red-500"
-            />
           </div>
         ))}
       </div>
@@ -316,13 +306,6 @@ export function FileTable({ viewMode, query }: Readonly<FileTableProps>) {
           open={linkDialogOpen}
           onOpenChange={setLinkDialogOpen}
           fileId={linkFileId}
-        />
-      )}
-      {selected && (
-        <FilePreviewDialog
-          open={!!selected}
-          onOpenChange={(v) => !v && setSelected(null)}
-          file={selected}
         />
       )}
     </div>

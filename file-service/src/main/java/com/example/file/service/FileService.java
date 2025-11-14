@@ -4,6 +4,7 @@ import java.io.InputStream;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -12,12 +13,14 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
+import com.example.file.exception.FileNotFoundException;
 import com.example.file.exception.FileStorageException;
 import com.example.file.exception.UserNotFoundException;
 import com.example.file.model.dto.FileJob;
 import com.example.file.model.dto.FileResponseDto;
 import com.example.file.model.dto.FileUpdateRequest;
 import com.example.file.model.dto.PresignedUrlResponse;
+import com.example.file.model.dto.ShareLinkDto;
 import com.example.file.model.entity.FileMetadata;
 import com.example.file.model.entity.FileVariant;
 import com.example.file.model.entity.User;
@@ -25,6 +28,7 @@ import com.example.file.model.enums.FileStatus;
 import com.example.file.model.enums.JobType;
 import com.example.file.repository.FileMetadataRepository;
 import com.example.file.repository.FileVariantRepository;
+import com.example.file.repository.LinkRepository;
 import com.example.file.repository.UserRepository;
 import com.example.file.utils.FileServiceUtils;
 import com.example.file.utils.JsonUtils;
@@ -46,6 +50,7 @@ public class FileService {
     private final FileMetadataRepository fileMetadataRepository;
     private final UserRepository userRepository;
     private final FileVariantRepository fileVariantRepository;
+    private final LinkRepository linkRepository;
     private final RedisTemplate<String, Object> redisTemplate;
     private static final String USER_NOT_FOUND = "User not found";
     private static final String FILE_NOT_FOUND = "File not found";
@@ -131,7 +136,7 @@ public class FileService {
         }
 
         return new FileResponseDto(meta.getId(), meta.getFilename(), meta.getMimeType(),
-                meta.getSize(), meta.getCreatedAt(), variants);
+                meta.getSize(), meta.getCreatedAt(), meta.getUpdatedAt(), variants, null);
     }
 
     private void sendJob(FileMetadata meta, JobType jobType, String queue) {
@@ -145,7 +150,7 @@ public class FileService {
                 .orElseThrow(() -> new FileStorageException(FILE_NOT_FOUND, new RuntimeException()));
 
         // Clear old variants (in case of reprocessing)
-        fileVariantRepository.deleteAll(fileVariantRepository.findByFile_Id(file.getId()));
+        fileVariantRepository.deleteAll(fileVariantRepository.findByFileId(file.getId()));
 
         updateRequest.getVariants().forEach(v -> {
             FileVariant variant = new FileVariant();
@@ -170,18 +175,41 @@ public class FileService {
 
         return fileMetadataRepository.findByOwner(owner)
                 .stream()
-                .map(f -> {
-                    var variants = fileVariantRepository.findByFile_Id(f.getId());
-                    return new FileResponseDto(
-                            f.getId(),
-                            f.getFilename(),
-                            f.getMimeType(),
-                            f.getSize(),
-                            f.getCreatedAt(),
-                            variants.stream()
-                                    .collect(Collectors.toMap(FileVariant::getVariantKey, FileVariant::getUrl)));
-                })
+                .map(this::mapToDto)
                 .collect(Collectors.toList());
+    }
+
+    public FileResponseDto viewFileDetail(UUID fileId) {
+        FileMetadata file = fileMetadataRepository.findById(fileId)
+                .orElseThrow(() -> new FileNotFoundException(FILE_NOT_FOUND));
+
+        return mapToDto(file);
+    }
+
+    private FileResponseDto mapToDto(FileMetadata file) {
+        var variants = fileVariantRepository.findByFileId(file.getId())
+                .stream()
+                .collect(Collectors.toMap(
+                        FileVariant::getVariantKey,
+                        FileVariant::getUrl));
+
+        var share = Optional.ofNullable(linkRepository.findByFileId(file.getId()))
+                .map(l -> new ShareLinkDto(
+                        l.getId(),
+                        l.getUrl(),
+                        l.getExpiresAt(),
+                        l.getPasswordHash() != null))
+                .orElse(null);
+
+        return new FileResponseDto(
+                file.getId(),
+                file.getFilename(),
+                file.getMimeType(),
+                file.getSize(),
+                file.getCreatedAt(),
+                file.getUpdatedAt(),
+                variants,
+                share);
     }
 
     @Transactional
@@ -202,7 +230,7 @@ public class FileService {
                     .build());
 
             // Delete variants from MinIO
-            fileVariantRepository.findByFile_Id(fileId).forEach(v -> {
+            fileVariantRepository.findByFileId(fileId).forEach(v -> {
                 try {
                     String variantPath = v.getUrl().substring(v.getUrl().indexOf(bucket) + bucket.length() + 1);
                     minioClient.removeObject(RemoveObjectArgs.builder()

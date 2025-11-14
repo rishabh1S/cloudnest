@@ -52,6 +52,11 @@ public class FileController {
         return ResponseEntity.ok(fileService.listFiles(userHeader));
     }
 
+    @GetMapping("/{fileId}")
+    public ResponseEntity<FileResponseDto> viewFile(@PathVariable UUID fileId){
+        return ResponseEntity.ok(fileService.viewFileDetail(fileId));
+    }
+
     @GetMapping("/download/{fileId}")
     public ResponseEntity<byte[]> download(@PathVariable UUID fileId) {
         byte[] data = fileService.downloadFile(fileId);
