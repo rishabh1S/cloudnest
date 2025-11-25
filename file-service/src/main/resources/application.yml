@@ -5,8 +5,7 @@ spring:
     password: ${DB_PASSWORD}
   data:
     redis:
-      host: redis
-      port: 6379
+      url: ${REDIS_URL}
   jpa:
     hibernate:
       ddl-auto: update
@@ -29,3 +28,5 @@ minio:
   access-key: ${MINIO_ACCESS_KEY}
   secret-key: ${MINIO_SECRET_KEY}
   bucket: ${MINIO_BUCKET}
+  region: ${MINIO_REGION}
+  publicBaseUrl: ${PUBLIC_FILE_BASE_URL}

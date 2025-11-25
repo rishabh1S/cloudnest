@@ -62,8 +62,8 @@ public class FileService {
     @Value("${minio.bucket}")
     private String bucket;
 
-    @Value("${minio.url}")
-    private String minioUrl;
+    @Value("${minio.publicBaseUrl}")
+    private String publicBaseUrl;
 
     public PresignedUrlResponse generatePresignedUrl(String filename, String contentType, Long size,
             String userHeader) {
@@ -94,7 +94,7 @@ public class FileService {
             meta.setMimeType(contentType);
             meta.setFileStatus(FileStatus.UPLOADED.name());
             meta.setOwner(owner);
-            meta.setUrl(minioUrl + "/" + bucket + "/" + objectKey);
+            meta.setUrl(publicBaseUrl + "/" + objectKey);
             meta.setCreatedAt(Instant.now());
             fileMetadataRepository.save(meta);
 
