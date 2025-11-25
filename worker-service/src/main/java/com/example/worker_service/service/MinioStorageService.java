@@ -23,8 +23,8 @@ public class MinioStorageService {
     @Value("${minio.bucket}")
     private String bucket;
 
-    @Value("${minio.url}")
-    private String minioUrl;
+    @Value("${minio.publicBaseUrl}")
+    private String publicBaseUrl;
 
     /** Get object input stream from MinIO */
     public InputStream getObject(String objectKey) {
@@ -66,8 +66,8 @@ public class MinioStorageService {
     /** Build public URL for variant */
     public String buildUrl(String objectKey, String variantKey) {
         if ("original".equals(variantKey)) {
-            return String.format("%s/%s/%s", minioUrl, bucket, objectKey);
+            return String.format("%s/%s", publicBaseUrl, objectKey);
         }
-        return String.format("%s/%s/variants/%s/%s", minioUrl, bucket, variantKey, objectKey);
+        return String.format("%s/variants/%s/%s", publicBaseUrl, variantKey, objectKey);
     }
 }

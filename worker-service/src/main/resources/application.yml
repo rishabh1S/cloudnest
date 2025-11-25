@@ -17,6 +17,8 @@ minio:
   access-key: ${MINIO_ACCESS_KEY}
   secret-key: ${MINIO_SECRET_KEY}
   bucket: ${MINIO_BUCKET}
+  region: ${MINIO_REGION}
+  publicBaseUrl: ${PUBLIC_FILE_BASE_URL}
 
 file:
   service:

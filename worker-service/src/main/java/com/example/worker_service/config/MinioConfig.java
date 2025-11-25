@@ -18,10 +18,14 @@ public class MinioConfig {
     @Value("${minio.secret-key}")
     private String secretKey;
 
+    @Value("${minio.region}") 
+    private String region;
+
     @Bean
     public MinioClient minioClient() {
         return MinioClient.builder()
                 .endpoint(url)
+                .region(region)
                 .credentials(accessKey, secretKey)
                 .build();
     }
