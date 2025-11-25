@@ -22,4 +22,4 @@ server:
 
 base:
   service:
-    url: ${BASE_URL}
+    url: ${LINK_SERVICE_URL}
