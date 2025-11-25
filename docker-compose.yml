@@ -8,8 +8,8 @@ services:
     container_name: api-gateway
     ports:
       - "80:80"
-    environment:
-      FRONTEND_ORIGIN: ${FRONTEND_ORIGIN}
+    env_file:
+      - .env.prod
     depends_on:
       - auth-service
       - file-service
@@ -38,8 +38,6 @@ services:
       - "8081:8081"
     env_file:
       - .env.prod
-    depends_on:
-      - redis
 
   # ========== LINK SERVICE ==========
   link-service:
@@ -65,12 +63,4 @@ services:
     env_file:
       - .env.prod
     depends_on:
-      - redis
       - file-service
-
-  # ========= REDIS QUEUE =========
-  redis:
-    image: redis:8.4-rc1-alpine3.22
-    container_name: redis
-    ports:
-      - "6379:6379"
