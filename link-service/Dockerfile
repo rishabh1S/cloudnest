@@ -13,11 +13,11 @@ COPY src ./src
 RUN mvn clean package -DskipTests
 
 # Stage 2: Run the jar
-FROM eclipse-temurin:21-jdk
+FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 
 # Copy the built jar from build stage
-COPY --from=build /app/target/*.jar app.jar
+COPY --from=build /app/target/*.jar /app.jar
 
 EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-XX:+UseContainerSupport", "-XX:MaxRAMPercentage=75.0", "-XX:+UseG1GC", "-jar", "/app.jar"]
