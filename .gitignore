@@ -9,7 +9,7 @@ logs/
 *.swp
 .env
 .env.local
-.env.*.local
+.env.*
 
 # ============================
 # Java / Maven / Spring Boot
