@@ -13,7 +13,6 @@ services:
     depends_on:
       - auth-service
       - file-service
-      - link-service
 
   # ========== AUTH SERVICE ==========
   auth-service:
@@ -36,18 +35,6 @@ services:
     container_name: file-service
     ports:
       - "8081:8081"
-    env_file:
-      - .env.prod
-
-  # ========== LINK SERVICE ==========
-  link-service:
-    build:
-      context: ./link-service
-      dockerfile: Dockerfile
-    image: cloudnest-link-service
-    container_name: link-service
-    ports:
-      - "8082:8082"
     env_file:
       - .env.prod
 

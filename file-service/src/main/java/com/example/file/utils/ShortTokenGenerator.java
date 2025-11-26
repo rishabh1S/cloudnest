@@ -1,4 +1,4 @@
-package com.example.link.utils;
+package com.example.file.utils;
 
 import java.security.SecureRandom;
 

@@ -1,4 +1,4 @@
-package com.example.link.exception;
+package com.example.file.exception;
 
 public class LinkNotFoundException extends RuntimeException {
     public LinkNotFoundException(String message) {

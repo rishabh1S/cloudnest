@@ -1,4 +1,4 @@
-package com.example.link.model.dto;
+package com.example.file.model.dto;
 
 public record AccessLinkResult(
         boolean success,

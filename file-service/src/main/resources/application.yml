@@ -1,15 +1,19 @@
 spring:
+  main:
+    lazy-initialization: true
   datasource:
     url: ${DB_URL}
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 5
   data:
     redis:
       url: ${REDIS_URL}
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: true
     properties:
       hibernate:
         "[format_sql]": true
@@ -22,6 +26,10 @@ spring:
 
 server:
   port: 8081
+  tomcat:
+    threads: 
+      max: 50
+    accept-count: 25
 
 minio:
   url: ${MINIO_PUBLIC_URL}
@@ -30,3 +38,7 @@ minio:
   bucket: ${MINIO_BUCKET}
   region: ${MINIO_REGION}
   publicBaseUrl: ${PUBLIC_FILE_BASE_URL}
+
+base:
+  service:
+    url: ${BASE_URL}

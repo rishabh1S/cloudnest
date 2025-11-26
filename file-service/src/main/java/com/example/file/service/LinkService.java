@@ -1,21 +1,21 @@
-package com.example.link.service;
+package com.example.file.service;
 
 import java.time.Instant;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import com.example.link.exception.LinkNotFoundException;
-import com.example.link.model.dto.AccessLinkResult;
-import com.example.link.model.dto.LinkRequest;
-import com.example.link.model.dto.LinkResponse;
-import com.example.link.model.entity.FileMetadata;
-import com.example.link.model.entity.Link;
-import com.example.link.repository.FileMetadataRepository;
-import com.example.link.repository.LinkRepository;
-import com.example.link.utils.ShortTokenGenerator;
+import com.example.file.exception.LinkNotFoundException;
+import com.example.file.model.dto.AccessLinkResult;
+import com.example.file.model.dto.LinkRequest;
+import com.example.file.model.dto.LinkResponse;
+import com.example.file.model.entity.FileMetadata;
+import com.example.file.model.entity.Link;
+import com.example.file.repository.FileMetadataRepository;
+import com.example.file.repository.LinkRepository;
+import com.example.file.utils.BCryptUtils;
+import com.example.file.utils.ShortTokenGenerator;
 
 import lombok.RequiredArgsConstructor;
 
@@ -23,7 +23,6 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class LinkService {
     private final LinkRepository linkRepository;
-    private final PasswordEncoder passwordEncoder;
     private final FileMetadataRepository fileMetadataRepository;
 
     @Value("${base.service.url}")
@@ -40,7 +39,7 @@ public class LinkService {
         link.setExpiresAt(req.expiresAt());
 
         if (req.password() != null && !req.password().isBlank()) {
-            link.setPasswordHash(passwordEncoder.encode(req.password()));
+            link.setPasswordHash(BCryptUtils.hash(req.password()));
         }
         String url = baseUrl + "/links/" + token;
         link.setUrl(url);
@@ -62,7 +61,7 @@ public class LinkService {
         }
 
         if (link.getPasswordHash() != null &&
-                (password == null || !passwordEncoder.matches(password, link.getPasswordHash()))) {
+                (password == null || !BCryptUtils.matches(password, link.getPasswordHash()))) {
             return AccessLinkResult.invalidPassword();
         }
 
