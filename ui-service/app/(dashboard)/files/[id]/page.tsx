@@ -80,7 +80,7 @@ export default function FileDetailPage({ params }: { params: { id: string } }) {
             onClick={() => setPreviewOpen(true)}
           >
             <FileCenter f={file} previewSrc={previewSrc} />
-            {file.type.startsWith("image/") && (
+            {previewSrc && (
               <div className="absolute bottom-6 right-6 bg-black/70 text-white text-sm px-4 py-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2">
                 <Eye className="h-4 w-4" />
                 Click to enlarge
@@ -145,7 +145,7 @@ export default function FileDetailPage({ params }: { params: { id: string } }) {
 const FileCenter: React.FC<FileCenterProps> = ({ f, previewSrc }) => {
   let content;
 
-  if (f.type.startsWith("image/") && previewSrc) {
+  if (previewSrc) {
     content = (
       <img
         src={previewSrc}
