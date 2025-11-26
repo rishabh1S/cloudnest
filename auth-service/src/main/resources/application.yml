@@ -1,12 +1,16 @@
 spring:
+  main:
+    lazy-initialization: true
   datasource:
     url: ${DB_URL}
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 5
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: true
     properties:
       hibernate:
         "[format_sql]": true
@@ -30,6 +34,10 @@ spring:
 
 server:
   port: 8080
+  tomcat:
+    threads: 
+      max: 50
+    accept-count: 25
 
 jwt:
   secret: ${JWT_SECRET}

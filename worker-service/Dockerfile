@@ -22,7 +22,18 @@ RUN apk update && \
     rm -rf /var/cache/apk/*
 
 # Copy the built jar from build stage
-COPY --from=build /app/target/*.jar /app.jar
+COPY --from=build /app/target/*.jar app.jar
 
-EXPOSE 8083
-ENTRYPOINT ["java", "-XX:+UseContainerSupport", "-XX:MaxRAMPercentage=75.0", "-XX:+UseG1GC", "-jar", "/app.jar"]
+ENV JAVA_OPTS="\
+  -Xms64m \
+  -Xmx128m \
+  -XX:+UseSerialGC \
+  -XX:MaxMetaspaceSize=96m \
+  -XX:TieredStopAtLevel=1 \
+  -Dspring.main.lazy-initialization=true \
+  -Dspring.main.web-application-type=none \
+  -Dlogging.level.root=WARN \
+  -Djava.io.tmpdir=/tmp \
+"
+
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]

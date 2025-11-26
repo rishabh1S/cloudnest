@@ -20,12 +20,12 @@ import lombok.RequiredArgsConstructor;
 @Configuration
 @RequiredArgsConstructor
 public class RedisConfig {
-    
+
     private final ImageVariantWorker imageVariantWorker;
     private final VideoThumbnailWorker videoThumbnailWorker;
     private final PdfPreviewWorker pdfPreviewWorker;
     private final DocPreviewWorker docPreviewWorker;
-    
+
     private static final String ON_MESSAGE = "onMessage";
     private static final String IMAGE_QUEUE = "image:variant:queue";
     private static final String PDF_QUEUE = "pdf:preview:queue";

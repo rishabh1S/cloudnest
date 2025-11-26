@@ -1,6 +1,9 @@
 spring:
   application:
     name: worker-service
+  main:
+    web-application-type: none
+    lazy-initialization: true
 
   data:
     redis:

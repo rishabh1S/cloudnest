@@ -17,7 +17,18 @@ FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 
 # Copy the built jar from build stage
-COPY --from=build /app/target/*.jar /app.jar
+COPY --from=build /app/target/*.jar app.jar
+
+ENV JAVA_OPTS="\
+  -Xms64m \
+  -Xmx200m \
+  -XX:MaxMetaspaceSize=128m \
+  -XX:CompressedClassSpaceSize=32m \
+  -XX:+UseSerialGC \
+  -Dserver.tomcat.max-threads=50 \
+  -Dspring.main.lazy-initialization=true \
+  -Dspring.datasource.hikari.maximumPoolSize=5 \
+"
 
 EXPOSE 8080
-ENTRYPOINT ["java", "-XX:+UseContainerSupport", "-XX:MaxRAMPercentage=75.0", "-XX:+UseG1GC", "-jar", "/app.jar"]
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]
