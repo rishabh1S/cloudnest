@@ -1,4 +1,4 @@
-package com.example.link.controller;
+package com.example.file.controller;
 
 import java.util.UUID;
 
@@ -13,9 +13,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.link.model.dto.LinkRequest;
-import com.example.link.model.dto.LinkResponse;
-import com.example.link.service.LinkService;
+import com.example.file.model.dto.LinkRequest;
+import com.example.file.model.dto.LinkResponse;
+import com.example.file.service.LinkService;
 
 import lombok.RequiredArgsConstructor;
 

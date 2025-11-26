@@ -1,4 +1,4 @@
-package com.example.link.model.dto;
+package com.example.file.model.dto;
 
 import java.time.Instant;
 import java.util.UUID;
