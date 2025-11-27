@@ -20,6 +20,8 @@ services:
       - auth-service
       - file-service
       - worker-service
+    networks:
+      - cloudnest
 
   # ========== AUTH SERVICE ==========
   auth-service:
@@ -33,6 +35,8 @@ services:
       - "8080"
     env_file:
       - .env.prod
+    networks:
+      - cloudnest
 
   # ========== FILE SERVICE ==========
   file-service:
@@ -46,6 +50,8 @@ services:
       - "8081"
     env_file:
       - .env.prod
+    networks:
+      - cloudnest
 
   # ========= WORKER SERVICE =========
   worker-service:
@@ -61,3 +67,10 @@ services:
       - .env.prod
     depends_on:
       - file-service
+    networks:
+      - cloudnest
+
+# ========== NETWORKS ==========
+networks:
+  cloudnest:
+    driver: bridge
