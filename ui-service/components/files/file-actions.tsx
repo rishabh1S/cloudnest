@@ -26,7 +26,7 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL;
 export async function onDownload(id: string, name: string) {
   try {
     const token = getToken();
-    const res = await fetch(`${API_BASE}/files/download/${id}`, {
+    const res = await fetch(`${API_BASE}/api/files/download/${id}`, {
       method: "GET",
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     });
@@ -50,7 +50,7 @@ export async function onDownload(id: string, name: string) {
 
 export async function onDelete(id: string) {
   try {
-    await api(`/files/${id}`, { method: "DELETE" });
+    await api(`/api/files/${id}`, { method: "DELETE" });
     mutate("/files/");
     toast.success("File deleted");
   } catch (e: any) {

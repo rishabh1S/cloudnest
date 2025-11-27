@@ -21,7 +21,7 @@ export default function FileBrowser({
   dateFilter,
   view,
 }: FileBrowserProps) {
-  const { data: files, isLoading } = useSWR<FileItem[]>("/files/", swrFetcher);
+  const { data: files, isLoading } = useSWR<FileItem[]>("/api/files/", swrFetcher);
 
   if (isLoading) return <p>Loading...</p>;
   if (!files || files.length === 0) return <p>No files found.</p>;

@@ -5,7 +5,7 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost";
 export async function api(input: RequestInfo, init?: RequestInit) {
   const token = getToken();
   const headers = new Headers(init?.headers || {});
-  const isPublic = typeof input === "string" && input.startsWith("/auth/");
+  const isPublic = typeof input === "string" && input.startsWith("/api/auth/");
 
   if (token && !isPublic) headers.set("Authorization", `Bearer ${token}`);
   if (!headers.has("Content-Type") && !(init?.body instanceof FormData)) {
