@@ -41,7 +41,7 @@ public class LinkService {
         if (req.password() != null && !req.password().isBlank()) {
             link.setPasswordHash(BCryptUtils.hash(req.password()));
         }
-        String url = baseUrl + "/links/" + token;
+        String url = String.format("%s/api/links/%s", baseUrl, token);
         link.setUrl(url);
 
         linkRepository.save(link);
