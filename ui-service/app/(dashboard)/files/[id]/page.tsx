@@ -25,7 +25,7 @@ export default function FileDetailPage({ params }: { params: { id: string } }) {
     data: file,
     isLoading,
     mutate,
-  } = useSWR<FileItem>(`/files/${params.id}`, swrFetcher);
+  } = useSWR<FileItem>(`/api/files/${params.id}`, swrFetcher);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [linkDialogOpen, setLinkDialogOpen] = useState(false);
   const [linkFileId, setLinkFileId] = useState<string | null>(null);

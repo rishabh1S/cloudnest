@@ -23,7 +23,7 @@ export function UploadDropzone() {
 
       try {
         // 1️⃣ Step 1: Request signed upload URL
-        const { presignedUrl: uploadUrl, objectKey } = await api("/files/upload", {
+        const { presignedUrl: uploadUrl, objectKey } = await api("/api/files/upload", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -61,7 +61,7 @@ export function UploadDropzone() {
         });
 
         // 3️⃣ Step 3: Notify backend that upload completed
-        const data = await api("/files/complete", {
+        const data = await api("/api/files/complete", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ objectKey }),

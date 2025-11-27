@@ -2,8 +2,8 @@ events {}
 
 http {
     log_format main '$remote_addr - $remote_user [$time_local] "$request" '
-                    '$status $body_bytes_sent "$http_referer" '
-                    '"$http_user_agent" "$http_x_forwarded_for"';
+    '$status $body_bytes_sent "$http_referer" '
+    '"$http_user_agent" "$http_x_forwarded_for"';
 
     access_log /var/log/nginx/access.log main;
     error_log /var/log/nginx/error.log debug;
@@ -46,7 +46,7 @@ http {
         add_header Strict-Transport-Security "max-age=31536000" always;
 
         # -------- AUTH SERVICE --------
-        location /auth/ {
+        location /api/auth/ {
             include /etc/nginx/cors.conf;
 
             proxy_pass http://auth_service;
@@ -56,8 +56,23 @@ http {
             proxy_set_header X-Forwarded-Proto $scheme;
         }
 
-        # -------- FILE SERVICE --------
-        location /files/ {
+        # PUBLIC LINKS (READ-ONLY)
+        location ~ ^/api/links/[A-Za-z0-9]*[0-9][A-Za-z0-9]*$ {
+            include /etc/nginx/cors.conf;
+
+            if ($request_method != GET) {
+                return 405;
+            }
+
+            proxy_pass http://file_service;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+
+        # PROTECTED SERVICES (FILES, LINKS)
+        location ~ ^/api/(files|links)/ {
             include /etc/nginx/cors.conf;
 
             auth_request /auth_verify;
@@ -73,53 +88,10 @@ http {
             client_max_body_size 200M;
         }
 
-        # -------- LINK ROUTES --------
-        location = /links/generate {
-            include /etc/nginx/cors.conf;
-
-            auth_request /auth_verify;
-            auth_request_set $user_header $upstream_http_x_user;
-
-            proxy_pass http://file_service;
-            proxy_set_header Host $host;
-            proxy_set_header X-Real-IP $remote_addr;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto $scheme;
-            proxy_set_header X-User $user_header;
-        }
-
-        location ~ ^/links/delete/[A-Za-z0-9-]+$ {
-            include /etc/nginx/cors.conf;
-
-            auth_request /auth_verify;
-            auth_request_set $user_header $upstream_http_x_user;
-
-            proxy_pass http://file_service;
-            proxy_set_header Host $host;
-            proxy_set_header X-Real-IP $remote_addr;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto $scheme;
-            proxy_set_header X-User $user_header;
-        }
-
-        location ~ ^/links/[A-Za-z0-9-]+$ {
-            include /etc/nginx/cors.conf;
-
-            if ($request_method != GET) {
-                return 405;
-            }
-
-            proxy_pass http://file_service;
-            proxy_set_header Host $host;
-            proxy_set_header X-Real-IP $remote_addr;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto $scheme;
-        }
-
         # ----- Auth Verification -----
         location = /auth_verify {
             internal;
-            proxy_pass http://auth_service/auth/verify;
+            proxy_pass http://auth_service/api/auth/verify;
 
             proxy_set_header Host "auth-service.internal";
             proxy_set_header Authorization $http_authorization;
@@ -131,7 +103,8 @@ http {
         }
 
         location / {
-            return 404;
+            root /usr/share/nginx/html;
+            try_files $uri /index.html;
         }
     }
 }

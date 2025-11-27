@@ -89,7 +89,7 @@ export function LinkFormDialog({
         expiresAt = new Date(Date.now() + totalMs).toISOString();
       }
 
-      const res = await api("/links/generate", {
+      const res = await api("/api/links/generate", {
         method: "POST",
         body: JSON.stringify({
           fileId,
@@ -112,7 +112,7 @@ export function LinkFormDialog({
 
   async function handleDeleteLink() {
     try {
-      await api(`/links/delete/${existingLink?.id}`, { method: "DELETE" });
+      await api(`/api/links/delete/${existingLink?.id}`, { method: "DELETE" });
       onLinkDeleted?.();
       toast.success("Link deleted");
       onOpenChange(false);

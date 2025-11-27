@@ -20,7 +20,7 @@ import com.example.file.service.LinkService;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/links")
+@RequestMapping("/api/links")
 @RequiredArgsConstructor
 public class LinkController {
     private final LinkService linkService;

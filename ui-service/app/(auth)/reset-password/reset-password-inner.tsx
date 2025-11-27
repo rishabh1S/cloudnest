@@ -32,7 +32,7 @@ export default function ResetPasswordPageInner() {
     }
     setIsLoading(true);
     try {
-      const data = await api(`/auth/reset-password?token=${token}`, {
+      const data = await api(`/api/auth/reset-password?token=${token}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ newPassword: password }),
