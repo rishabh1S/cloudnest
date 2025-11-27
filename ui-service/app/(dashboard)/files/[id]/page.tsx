@@ -38,7 +38,7 @@ export default function FileDetailPage({ params }: { params: { id: string } }) {
     );
 
   if (!file) return notFound();
-  const previewSrc = file.variants?.medium || file.variants?.original;
+  const previewSrc = file.variants?.medium;
 
   const metadata = [
     { label: "File Name", value: file.name },
