@@ -6,18 +6,20 @@ services:
       dockerfile: Dockerfile
     image: api-gateway
     container_name: api-gateway
+    restart: always
     ports:
       - "80:80"
       - "443:443"
     volumes:
-    - /etc/letsencrypt/live/api-cloudnest.duckdns.org:/etc/letsencrypt/live/api-cloudnest.duckdns.org:ro
-    - /etc/letsencrypt/archive:/etc/letsencrypt/archive:ro
-    - /etc/letsencrypt/renewal:/etc/letsencrypt/renewal:ro
+      - /etc/letsencrypt/live/api-cloudnest.duckdns.org:/etc/letsencrypt/live/api-cloudnest.duckdns.org:ro
+      - /etc/letsencrypt/archive:/etc/letsencrypt/archive:ro
+      - /etc/letsencrypt/renewal:/etc/letsencrypt/renewal:ro
     env_file:
       - .env.prod
     depends_on:
       - auth-service
       - file-service
+      - worker-service
 
   # ========== AUTH SERVICE ==========
   auth-service:
@@ -26,8 +28,9 @@ services:
       dockerfile: Dockerfile
     image: cloudnest-auth-service
     container_name: auth-service
-    ports:
-      - "8080:8080"
+    restart: always
+    expose:
+      - "8080"
     env_file:
       - .env.prod
 
@@ -38,8 +41,9 @@ services:
       dockerfile: Dockerfile
     image: cloudnest-file-service
     container_name: file-service
-    ports:
-      - "8081:8081"
+    restart: always
+    expose:
+      - "8081"
     env_file:
       - .env.prod
 
@@ -50,8 +54,9 @@ services:
       dockerfile: Dockerfile
     image: cloudnest-worker-service
     container_name: worker-service
-    ports:
-      - "8083:8083"
+    restart: always
+    expose:
+      - "8083"
     env_file:
       - .env.prod
     depends_on:
