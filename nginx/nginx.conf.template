@@ -2,8 +2,8 @@ events {}
 
 http {
     log_format main '$remote_addr - $remote_user [$time_local] "$request" '
-    '$status $body_bytes_sent "$http_referer" '
-    '"$http_user_agent" "$http_x_forwarded_for"';
+                    '$status $body_bytes_sent "$http_referer" '
+                    '"$http_user_agent" "$http_x_forwarded_for"';
 
     access_log /var/log/nginx/access.log main;
     error_log /var/log/nginx/error.log debug;
@@ -16,11 +16,36 @@ http {
         server file-service:8081;
     }
 
+    # ====================================
+    # HTTP → HTTPS redirect
+    # ====================================
     server {
         listen 80;
+        server_name ${SERVER_NAME};
+        return 301 https://$host$request_uri;
+    }
+
+    # ====================================
+    # HTTPS Server
+    # ====================================
+    server {
+        listen 443 ssl;
+        http2 on;
+        server_name ${SERVER_NAME};
         set $frontend_origin "${FRONTEND_ORIGIN}";
 
-        # ----------- AUTH Service -----------
+        # SSL Certs
+        ssl_certificate /etc/letsencrypt/live/api-cloudnest.duckdns.org/fullchain.pem;
+        ssl_certificate_key /etc/letsencrypt/live/api-cloudnest.duckdns.org/privkey.pem;
+
+        # SSL security settings
+        ssl_protocols TLSv1.2 TLSv1.3;
+        ssl_prefer_server_ciphers on;
+        ssl_session_cache shared:SSL:10m;
+        ssl_session_timeout 10m;
+        add_header Strict-Transport-Security "max-age=31536000" always;
+
+        # -------- AUTH SERVICE --------
         location /auth/ {
             include /etc/nginx/cors.conf;
 
@@ -31,22 +56,24 @@ http {
             proxy_set_header X-Forwarded-Proto $scheme;
         }
 
-        # ----------- FILE Service -----------
+        # -------- FILE SERVICE --------
         location /files/ {
             include /etc/nginx/cors.conf;
 
             auth_request /auth_verify;
             auth_request_set $user_header $upstream_http_x_user;
+
             proxy_pass http://file_service;
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
             proxy_set_header X-Forwarded-Proto $scheme;
             proxy_set_header X-User $user_header;
+
             client_max_body_size 200M;
         }
 
-        # 🔹 1. Protected create link
+        # -------- LINK ROUTES --------
         location = /links/generate {
             include /etc/nginx/cors.conf;
 
@@ -61,7 +88,6 @@ http {
             proxy_set_header X-User $user_header;
         }
 
-        # 🔹 2. Protected delete link
         location ~ ^/links/delete/[A-Za-z0-9-]+$ {
             include /etc/nginx/cors.conf;
 
@@ -76,7 +102,6 @@ http {
             proxy_set_header X-User $user_header;
         }
 
-        # 🔹 3. Public link access (redirect)
         location ~ ^/links/[A-Za-z0-9-]+$ {
             include /etc/nginx/cors.conf;
 
@@ -91,12 +116,14 @@ http {
             proxy_set_header X-Forwarded-Proto $scheme;
         }
 
-        # ----------- AUTH verification subrequest -----------
+        # ----- Auth Verification -----
         location = /auth_verify {
             internal;
             proxy_pass http://auth_service/auth/verify;
+
             proxy_set_header Host "auth-service.internal";
             proxy_set_header Authorization $http_authorization;
+
             client_max_body_size 0;
             proxy_pass_request_body off;
             proxy_set_header Content-Length "";
