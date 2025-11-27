@@ -8,6 +8,11 @@ services:
     container_name: api-gateway
     ports:
       - "80:80"
+      - "443:443"
+    volumes:
+    - /etc/letsencrypt/live/api-cloudnest.duckdns.org:/etc/letsencrypt/live/api-cloudnest.duckdns.org:ro
+    - /etc/letsencrypt/archive:/etc/letsencrypt/archive:ro
+    - /etc/letsencrypt/renewal:/etc/letsencrypt/renewal:ro
     env_file:
       - .env.prod
     depends_on:
