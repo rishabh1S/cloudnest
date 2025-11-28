@@ -17,11 +17,14 @@ services:
     env_file:
       - .env.prod
     depends_on:
-      - auth-service
-      - file-service
-      - worker-service
+      auth-service:
+        condition: service_healthy
+      file-service:
+        condition: service_healthy
+      worker-service:
+        condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost/"]
+      test: ["CMD", "wget", "-qO-", "http://localhost/health"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -91,7 +94,8 @@ services:
     env_file:
       - .env.prod
     depends_on:
-      - file-service
+      file-service:
+        condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "pgrep -f worker-service || exit 1"]
       interval: 10s
@@ -103,3 +107,13 @@ services:
       options:
         max-size: "10m"
         max-file: "2"
+  
+  # ========= DOZZLE LOG VIEWER =========
+  dozzle:
+    image: amir20/dozzle:latest
+    container_name: dozzle
+    restart: always
+    ports:
+      - "9999:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
