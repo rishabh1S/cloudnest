@@ -77,6 +77,11 @@ docker-compose.override.yml
 *.pid.lock
 
 # ============================
+# GitHub Actions
+# ============================
+.github/ssh/
+
+# ============================
 # OS generated files
 # ============================
 Thumbs.db
