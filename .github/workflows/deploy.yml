@@ -34,10 +34,10 @@ jobs:
             git pull origin main
 
             # Build Docker images
-            docker-compose build
+            docker compose build
 
             # Deploy new containers, removing old ones.
-            docker-compose up -d --build --remove-orphans
+            docker compose up -d --build --remove-orphans
 
             # Remove dangling images
             docker image prune -f
