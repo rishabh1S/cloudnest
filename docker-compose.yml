@@ -51,8 +51,8 @@ services:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/api/auth/health"]
       interval: 10s
       timeout: 5s
-      retries: 5
-      start_period: 20s
+      retries: 6
+      start_period: 30s
     logging:
       driver: "json-file"
       options:
@@ -73,10 +73,10 @@ services:
       - .env.prod
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:8081/api/files/health"]
-      interval: 10s
+      interval: 15s
       timeout: 5s
-      retries: 5
-      start_period: 20s
+      retries: 6
+      start_period: 30s
     logging:
       driver: "json-file"
       options:
