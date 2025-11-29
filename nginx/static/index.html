@@ -7,29 +7,57 @@
     <title>CloudNest API Gateway</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            background: #0a0a0a;
-            color: #fff;
+            margin: 0;
+            padding: 0;
+            font-family: "Inter", Arial, sans-serif;
+            background: radial-gradient(circle at top, #1b1b1b, #0e0e0e);
+            color: #eaeaea;
+            height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
-            flex-direction: column;
+            overflow: hidden;
         }
 
         h1 {
-            font-size: 2.2rem;
+            font-size: 2rem;
+            margin-bottom: 0.6rem;
+            letter-spacing: 0.5px;
         }
 
         p {
-            opacity: 0.7;
+            font-size: 1rem;
+            opacity: 0.8;
+            margin-bottom: 1.2rem;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 0.35rem 0.7rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            background: #10b98122;
+            color: #10b981;
+            border: 1px solid #10b98155;
+        }
+
+        .footer {
+            margin-top: 1.2rem;
+            opacity: 0.5;
+            font-size: 0.85rem;
         }
     </style>
 </head>
 
 <body>
-    <h1>Welcome to CloudNest API Gateway</h1>
-    <p>Your microservices are running successfully.</p>
+    <div>
+        <h1>CloudNest API Gateway</h1>
+        <p>Your microservices are healthy and running.</p>
+
+        <div class="status">● Operational</div>
+
+        <div class="footer">CloudNest © 2025</div>
+    </div>
 </body>
 
 </html>
