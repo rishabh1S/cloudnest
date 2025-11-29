@@ -1,0 +1,3 @@
+{
+  "ignoreCommand": "CHANGED=$(git diff --name-only HEAD HEAD@{1}); echo \"$CHANGED\" | grep -v '^ui-service/' > /dev/null"
+}
