@@ -17,18 +17,9 @@ services:
     env_file:
       - .env.prod
     depends_on:
-      auth-service:
-        condition: service_healthy
-      file-service:
-        condition: service_healthy
-      worker-service:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 5s
+    - auth-service
+    - file-service
+    - worker-service
     logging:
       driver: "json-file"
       options:
@@ -47,12 +38,6 @@ services:
       - "8080"
     env_file:
       - .env.prod
-    healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/api/auth/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 6
-      start_period: 30s
     logging:
       driver: "json-file"
       options:
@@ -71,12 +56,6 @@ services:
       - "8081"
     env_file:
       - .env.prod
-    healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8081/api/files/health"]
-      interval: 15s
-      timeout: 5s
-      retries: 6
-      start_period: 30s
     logging:
       driver: "json-file"
       options:
@@ -94,14 +73,7 @@ services:
     env_file:
       - .env.prod
     depends_on:
-      file-service:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD-SHELL", "pgrep -f worker-service || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
+    - file-service
     logging:
       driver: "json-file"
       options:
