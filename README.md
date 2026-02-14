@@ -19,7 +19,7 @@ A modern cloud-ready file storage and sharing system built with a microservices 
 #### Backend
 - Distributed microservices (Auth, File, Worker)
 - JWT authentication + NGINX auth_request
-- Redis-backed message queue for background jobs
+- Redis-backed pub-sub for background jobs
 - Thumbnail generation pipeline
 - Optimized Spring Boot containers
 - S3-compatible storage abstraction
