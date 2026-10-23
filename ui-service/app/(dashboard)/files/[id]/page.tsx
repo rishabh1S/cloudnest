@@ -9,7 +9,7 @@ import { swrFetcher } from "@/lib/api";
 import { FileItem } from "@/lib/store";
 import { format } from "date-fns";
 import { ArrowLeft, Eye, Loader2 } from "lucide-react";
-import { notFound, useRouter } from "next/navigation";
+import { notFound, useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { LuFile, LuFileArchive, LuFileMusic } from "react-icons/lu";
 import useSWR from "swr";
@@ -19,13 +19,14 @@ type FileCenterProps = {
   previewSrc?: string;
 };
 
-export default function FileDetailPage({ params }: { params: { id: string } }) {
+export default function FileDetailPage() {
+  const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const {
     data: file,
     isLoading,
     mutate,
-  } = useSWR<FileItem>(`/api/files/${params.id}`, swrFetcher);
+  } = useSWR<FileItem>(`/api/files/${id}`, swrFetcher);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [linkDialogOpen, setLinkDialogOpen] = useState(false);
   const [linkFileId, setLinkFileId] = useState<string | null>(null);
